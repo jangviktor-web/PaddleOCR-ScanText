@@ -13,5 +13,11 @@ local.properties
 *.apk
 *.hprof
 /app/release/
-/fastdeploydemo/src/main/assets/models/
+/ncnndemo/
+/ncnnAndroidPPOCR/
+/fastdeployOCR/
+/fastdeploydemo/
+/doc/
+/PaddleOCR4Android/PaddleLite/cxx/
+/PaddleOCR4Android/PaddleLite/java/
 /fastDeployLib/build/
