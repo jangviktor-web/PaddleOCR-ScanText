@@ -1,27 +1,27 @@
 # PaddleOCR-ScanText — 离线多语言 OCR 文字识别
 
-基于 PaddleOCR 的离线文字识别 Android 应用，支持 4 种语言，无需联网即可使用。
+基于 PaddleOCR 的离线文字识别 Android 应用，支持中英日繁体及韩文，无需联网即可使用。
 
 ## 下载
 
 | 版本 | 下载 |
 |------|------|
-| **v2.2.0**（最新） | [app-v2.2.0-more.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.2.0/app-v2.2.0-more.apk) |
+| **v2.3.0**（最新） | [PaddleOCR-v2.3.0-PP-OCRv5-v2.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.3.0/PaddleOCR-v2.3.0-PP-OCRv5-v2.apk) |
+| v2.2.0 | [app-v2.2.0-more.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.2.0/app-v2.2.0-more.apk) |
 
-> APK 大小约 84MB，已内置全部语言模型，安装即可使用。
+> APK 大小约 61MB，已内置全部语言模型，安装即可使用。
 
 ## 支持语言
 
 | 语言 | 模型 | 说明 |
 |------|------|------|
-| 中文 + English | PP-OCRv4 | 默认语言，中英混排识别 |
-| 日本語 | PP-OCRv3 | 日文识别 |
+| 中英 日PP-OCRv5 | PP-OCRv5 | 默认语言，单模型覆盖中文、英文、日文、繁体中文 |
 | 한국어 | PP-OCRv3 | 韩文识别（精度约 60%） |
-| 繁體中文 | PP-OCRv3 | 繁体中文识别 |
 
 ## 功能特性
 
 - **离线识别** — 无需联网，本地运行 PaddleOCR 引擎
+- **PP-OCRv5 引擎** — 最新 OCR 模型，单模型支持中英日繁体，支持 109 种语言
 - **多语言切换** — 选择语言后自动加载对应模型
 - **结巴分词** — 集成中文分词引擎，智能分词
 - **三种交互模式**：
