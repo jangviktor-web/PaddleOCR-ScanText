@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -25,31 +27,75 @@ import com.equationl.paddleocr4android.callback.OcrInitCallback
 import com.equationl.paddleocr4android.callback.OcrRunCallback
 import com.github.houbb.segment.bs.SegmentBs
 import com.github.houbb.segment.support.segment.result.impl.SegmentResultHandlers
-import java.io.File
-import java.io.InputStream
-import kotlin.math.abs
+import java.io.*
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executors
 
-/**
- * 分词结果：一个词 + 对应的 OCR box 索引列表
- */
 data class WordInfo(
     val text: String,
-    val boxIndices: List<Int> // 对应 allResultBoxes 中的索引
+    val boxIndices: List<Int>
 )
 
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "OCRDemo"
+        private const val PREFS_NAME = "ocr_models"
+        private const val KEY_DOWNLOADED = "downloaded_models"
     }
 
-    private val languageMap = linkedMapOf(
-        "中文 + English" to "ch_PP-OCRv4",
-        "English" to "en_PP-OCRv4",
-        "日本語" to "japan_PP-OCRv4",
-        "한국어" to "korean_PP-OCRv4",
-        "Français" to "french_PP-OCRv4",
-        "Deutsch" to "german_PP-OCRv4",
-        "Русский" to "russian_PP-OCRv4",
+    // ======================== 语言配置 ========================
+
+    private val bundledLanguages = setOf("ch_PP-OCRv4")
+
+    /**
+     * 模型来源：
+     * - 中文：assets 预装 .nb 格式
+     * - 英文：可下载 slim .nb 格式（3.3MB），det/cls 复用中文
+     * - 其他语言：仅提供 inference 格式，PaddleLite 无法加载，暂不支持
+     */
+    private val languageConfig = linkedMapOf(
+        "中文 + English" to LangModel(
+            dir = "ch_PP-OCRv4",
+            recUrl = null,
+            label = "已预装"
+        ),
+        "English" to LangModel(
+            dir = "en_PP-OCRv3_slim",
+            recUrl = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_slim_infer.nb",
+            label = "可下载 · 3.3MB"
+        ),
+        "日本語" to LangModel(
+            dir = "japan_PP-OCRv3",
+            recUrl = null,
+            label = "暂不支持（需要 .nb 格式模型）"
+        ),
+        "한국어" to LangModel(
+            dir = "korean_PP-OCRv3",
+            recUrl = null,
+            label = "暂不支持（需要 .nb 格式模型）"
+        ),
+        "Français" to LangModel(
+            dir = "latin_PP-OCRv3",
+            recUrl = null,
+            label = "暂不支持（需要 .nb 格式模型）"
+        ),
+        "Deutsch" to LangModel(
+            dir = "latin_PP-OCRv3",
+            recUrl = null,
+            label = "暂不支持（需要 .nb 格式模型）"
+        ),
+        "Русский" to LangModel(
+            dir = "cyrillic_PP-OCRv3",
+            recUrl = null,
+            label = "暂不支持（需要 .nb 格式模型）"
+        ),
+    )
+
+    data class LangModel(
+        val dir: String,
+        val recUrl: String?,
+        val label: String
     )
 
     // UI
@@ -76,20 +122,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnBack: ImageView
     private lateinit var spinnerLang: Spinner
     private lateinit var tvWordsBtnLabel: TextView
+    private lateinit var btnDownloadModel: TextView
 
     // 逻辑
     private lateinit var ocr: OCR
     private lateinit var wordAdapter: WordAdapter
     private var currentBitmap: Bitmap? = null
     private var isModelLoaded = false
-    private var currentMode = 0 // 0=框选, 1=逐行, 2=分词
+    private var currentMode = 0
     private var allResultBoxes: List<FloatArray> = emptyList()
     private var allResultWords: List<String> = emptyList()
     private var allResultLines: List<String> = emptyList()
-    private var segmentedWords: List<WordInfo> = emptyList() // 结巴分词结果
+    private var segmentedWords: List<WordInfo> = emptyList()
     private var currentPhotoUri: Uri? = null
-    private var resultText: String = ""      // 识别后的完整文本（复制用）
-    private var selectedText: String = ""    // 当前选中的文本（复制/分享用）
+    private var resultText: String = ""
+    private var selectedText: String = ""
+
+    // 下载
+    private val downloadExecutor = Executors.newSingleThreadExecutor()
+    private val handler = Handler(Looper.getMainLooper())
+    private var isDownloading = false
+    private val downloadedModels = mutableSetOf<String>()
 
     // 分词器
     private val segmentBs: SegmentBs by lazy { SegmentBs.newInstance() }
@@ -112,9 +165,176 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         ocr = OCR(this)
         wordAdapter = WordAdapter { onWordAdapterSelectionChanged() }
+        loadDownloadedModels()
         initViews()
         setupListeners()
+        updateDownloadButton()
     }
+
+    // ======================== 模型下载持久化 ========================
+
+    private fun loadDownloadedModels() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val saved = prefs.getStringSet(KEY_DOWNLOADED, emptySet()) ?: emptySet()
+        downloadedModels.addAll(saved)
+        downloadedModels.retainAll { isModelAvailable(it) }
+    }
+
+    private fun saveDownloadedModels() {
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            .edit()
+            .putStringSet(KEY_DOWNLOADED, downloadedModels.toSet())
+            .apply()
+    }
+
+    private fun isModelAvailable(modelDir: String): Boolean {
+        // 1. 检查 assets
+        try {
+            val files = assets.list("models/$modelDir")
+            if (files != null && files.any { it.endsWith(".nb") }) return true
+        } catch (_: Exception) {}
+
+        // 2. 检查内部存储
+        val dir = File(filesDir, "models/$modelDir")
+        return dir.exists() && dir.listFiles()?.any { it.name.endsWith(".nb") } == true
+    }
+
+    /**
+     * 获取模型目录的实际路径
+     * 以 "/" 开头的路径会被 PaddleLite 直接从文件系统加载
+     */
+    private fun getModelPath(modelDir: String): String {
+        // 优先内部存储（下载的模型）— 用绝对路径
+        val internalDir = File(filesDir, "models/$modelDir")
+        if (internalDir.exists() && internalDir.listFiles()?.any { it.name.endsWith(".nb") } == true) {
+            return internalDir.absolutePath
+        }
+        // assets 中的模型 — 不以 "/" 开头，PaddleLite 会从 assets 加载
+        return "models/$modelDir"
+    }
+
+    // ======================== 下载按钮逻辑 ========================
+
+    private fun updateDownloadButton() {
+        val selectedLang = spinnerLang.selectedItem as? String ?: return
+        val langKey = selectedLang.removePrefix("✓ ").removePrefix("↓ ").removePrefix("✗ ")
+        val config = languageConfig[langKey] ?: return
+
+        when {
+            isModelAvailable(config.dir) -> {
+                btnDownloadModel.visibility = View.GONE
+            }
+            config.recUrl != null -> {
+                // 可下载
+                btnDownloadModel.visibility = View.VISIBLE
+                btnDownloadModel.isEnabled = !isDownloading
+                btnDownloadModel.text = if (isDownloading) "下载中..." else "下载"
+            }
+            else -> {
+                // 不支持
+                btnDownloadModel.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun startDownload(modelConfig: LangModel) {
+        if (isDownloading) return
+        val url = modelConfig.recUrl ?: return
+
+        isDownloading = true
+        btnDownloadModel.text = "0%"
+        btnDownloadModel.isEnabled = false
+        tvStatus.text = "正在下载 ${modelConfig.dir} 模型..."
+
+        downloadExecutor.execute {
+            try {
+                val modelDir = File(filesDir, "models/${modelConfig.dir}")
+                modelDir.mkdirs()
+
+                // 下载 .nb 文件（直接下载，无需解压）
+                val nbFile = File(modelDir, "rec.nb")
+                downloadFile(url, nbFile) { progress ->
+                    handler.post {
+                        btnDownloadModel.text = "$progress%"
+                    }
+                }
+
+                // 从 assets 复制共享模型（det.nb + cls.nb）
+                copySharedModels(modelDir)
+
+                // 验证
+                val hasAll = modelDir.listFiles()?.filter { it.name.endsWith(".nb") }?.size == 3
+
+                handler.post {
+                    isDownloading = false
+                    if (hasAll) {
+                        downloadedModels.add(modelConfig.dir)
+                        saveDownloadedModels()
+                        tvStatus.text = "✅ ${modelConfig.dir} 下载完成"
+                        Toast.makeText(this, "模型下载完成", Toast.LENGTH_SHORT).show()
+                    } else {
+                        tvStatus.text = "❌ 模型文件不完整"
+                        Toast.makeText(this, "下载失败：模型文件不完整", Toast.LENGTH_SHORT).show()
+                    }
+                    updateDownloadButton()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "下载失败", e)
+                handler.post {
+                    isDownloading = false
+                    tvStatus.text = "❌ 下载失败: ${e.message}"
+                    Toast.makeText(this, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    updateDownloadButton()
+                }
+            }
+        }
+    }
+
+    private fun copySharedModels(targetDir: File) {
+        val sharedModels = listOf("det.nb", "cls.nb")
+        for (name in sharedModels) {
+            val target = File(targetDir, name)
+            if (target.exists()) continue
+            try {
+                assets.open("models/ch_PP-OCRv4/$name").use { input ->
+                    target.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "复制共享模型 $name 失败", e)
+            }
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun downloadFile(urlStr: String, destFile: File, onProgress: (Int) -> Unit) {
+        val url = URL(urlStr)
+        val conn = url.openConnection() as HttpURLConnection
+        conn.connectTimeout = 15000
+        conn.readTimeout = 60000
+        conn.connect()
+
+        val total = conn.contentLength
+        var downloaded = 0
+        val buffer = ByteArray(8192)
+
+        conn.inputStream.use { input ->
+            destFile.outputStream().use { output ->
+                var read: Int
+                while (input.read(buffer).also { read = it } != -1) {
+                    output.write(buffer, 0, read)
+                    downloaded += read
+                    if (total > 0) {
+                        val pct = (downloaded * 100 / total)
+                        onProgress(pct)
+                    }
+                }
+            }
+        }
+    }
+
+    // ======================== UI 初始化 ========================
 
     private fun initViews() {
         ivPreview = findViewById(R.id.iv_preview)
@@ -140,20 +360,34 @@ class MainActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btn_back)
         spinnerLang = findViewById(R.id.spinner_lang)
         tvWordsBtnLabel = findViewById(R.id.tv_words_btn_label)
+        btnDownloadModel = findViewById(R.id.btn_download_model)
 
         rvWords.layoutManager = GridLayoutManager(this, 3)
         rvWords.adapter = wordAdapter
 
-        val langNames = languageMap.keys.toList()
-        spinnerLang.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, langNames)
+        // 语言 Spinner 适配器
+        val langDisplayNames = languageConfig.keys.map { name ->
+            val cfg = languageConfig[name]!!
+            when {
+                isModelAvailable(cfg.dir) -> "✓ $name"
+                cfg.recUrl != null -> "↓ $name"
+                else -> "✗ $name"
+            }
+        }
+        spinnerLang.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, langDisplayNames)
 
-        // 图片上点击行 → 选中/取消
+        spinnerLang.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                updateDownloadButton()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
         ocrOverlay.onLineSelected = { lineIndex, lineText ->
             selectedText = if (lineIndex >= 0) lineText else ""
             updateTvResultHighlight()
         }
 
-        // 图片上点击单个 box → 选中/取消
         ocrOverlay.onBoxSelected = { _, _ ->
             val indices = ocrOverlay.getSelectedIndices()
             selectedText = if (indices.isNotEmpty()) {
@@ -163,32 +397,6 @@ class MainActivity : AppCompatActivity() {
             } else ""
             updateTvResultHighlight()
         }
-    }
-
-    /** 在结果文本中高亮选中的部分 */
-    private fun updateTvResultHighlight() {
-        if (selectedText.isEmpty()) {
-            tvResult.text = allResultLines.joinToString("\n")
-            return
-        }
-        // 高亮显示选中文本
-        val fullText = allResultLines.joinToString("\n")
-        val spannable = android.text.SpannableString(fullText)
-
-        // 查找并高亮所有匹配的选中文本
-        var searchFrom = 0
-        while (searchFrom < fullText.length) {
-            val start = fullText.indexOf(selectedText, searchFrom)
-            if (start < 0) break
-            val end = start + selectedText.length
-            spannable.setSpan(
-                android.text.style.BackgroundColorSpan(Color.parseColor("#662196F3")),
-                start, end,
-                android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-            searchFrom = end
-        }
-        tvResult.text = spannable
     }
 
     private fun setupListeners() {
@@ -214,49 +422,74 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btn_action_share).setOnClickListener { shareResult() }
         findViewById<View>(R.id.btn_action_words).setOnClickListener { switchMode(2) }
 
-        // 全选：所有模式都支持
         val selectAllListener = View.OnClickListener {
             when (currentMode) {
                 0 -> selectAllBoxes()
                 1 -> selectAllLines()
-                2 -> {
-                    if (wordAdapter.itemCount > 0) wordAdapter.selectAll()
-                    // selectAll() 会触发 onSelectionChanged → 更新 selectedText
-                }
+                2 -> { if (wordAdapter.itemCount > 0) wordAdapter.selectAll() }
             }
         }
         findViewById<View>(R.id.btn_action_select_all).setOnClickListener(selectAllListener)
         btnSelectAll.setOnClickListener(selectAllListener)
+
+        btnDownloadModel.setOnClickListener {
+            val selectedLang = spinnerLang.selectedItem as? String ?: return@setOnClickListener
+            val langKey = selectedLang.removePrefix("✓ ").removePrefix("↓ ").removePrefix("✗ ")
+            val config = languageConfig[langKey] ?: return@setOnClickListener
+            startDownload(config)
+        }
     }
 
-    /** 框选模式：全选所有 box */
-    private fun selectAllBoxes() {
-        val all = (allResultWords.indices).toSet()
-        ocrOverlay.setSelectedIndices(all)
-        selectedText = allResultWords.joinToString("")
-        updateTvResultHighlight()
-    }
+    // ======================== 文本高亮 ========================
 
-    /** 逐行模式：全选所有行 */
-    private fun selectAllLines() {
-        val all = (allResultLines.indices).toSet()
-        ocrOverlay.setSelectedIndices(all)
-        selectedText = allResultLines.joinToString("\n")
-        updateTvResultHighlight()
+    private fun updateTvResultHighlight() {
+        if (selectedText.isEmpty()) {
+            tvResult.text = allResultLines.joinToString("\n")
+            return
+        }
+        val fullText = allResultLines.joinToString("\n")
+        val spannable = android.text.SpannableString(fullText)
+        var searchFrom = 0
+        while (searchFrom < fullText.length) {
+            val start = fullText.indexOf(selectedText, searchFrom)
+            if (start < 0) break
+            val end = start + selectedText.length
+            spannable.setSpan(
+                android.text.style.BackgroundColorSpan(Color.parseColor("#662196F3")),
+                start, end,
+                android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            searchFrom = end
+        }
+        tvResult.text = spannable
     }
 
     // ======================== 模型 & 识别 ========================
 
     private fun loadModel() {
-        val selectedLang = spinnerLang.selectedItem as String
-        val modelDir = languageMap[selectedLang]!!
+        val selectedLang = spinnerLang.selectedItem as? String ?: return
+        val langKey = selectedLang.removePrefix("✓ ").removePrefix("↓ ").removePrefix("✗ ")
+        val config = languageConfig[langKey] ?: return
+        val modelDir = config.dir
+
+        if (!isModelAvailable(modelDir)) {
+            if (config.recUrl != null) {
+                tvStatus.text = "请先下载 $langKey 模型"
+                Toast.makeText(this, "请先点击下载按钮获取模型", Toast.LENGTH_SHORT).show()
+            } else {
+                tvStatus.text = "$langKey 暂不支持"
+                Toast.makeText(this, "该语言暂无可用的 PaddleLite 模型", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
         val btnLoad = findViewById<View>(R.id.btn_load_model)
         btnLoad.isEnabled = false
-        tvStatus.text = "正在加载 $selectedLang 模型..."
+        tvStatus.text = "正在加载 $langKey 模型..."
         tvModelLabel.text = "加载中..."
 
-        val config = OcrConfig().apply {
-            modelPath = "models/$modelDir"
+        val configOcr = OcrConfig().apply {
+            modelPath = getModelPath(modelDir)
             clsModelFilename = "cls.nb"
             detModelFilename = "det.nb"
             recModelFilename = "rec.nb"
@@ -267,10 +500,10 @@ class MainActivity : AppCompatActivity() {
 
         if (isModelLoaded) { ocr.releaseModel(); isModelLoaded = false }
 
-        ocr.initModel(config, object : OcrInitCallback {
+        ocr.initModel(configOcr, object : OcrInitCallback {
             override fun onSuccess() = runOnUiThread {
                 isModelLoaded = true
-                tvStatus.text = "✅ $selectedLang 就绪"
+                tvStatus.text = "✅ $langKey 就绪"
                 tvModelLabel.text = "✅ 已加载"
                 btnLoad.isEnabled = true
             }
@@ -295,13 +528,10 @@ class MainActivity : AppCompatActivity() {
             override fun onSuccess(result: OcrResult) {
                 val elapsed = System.currentTimeMillis() - t0
                 val wordLabels = ocr.getWordLabels()
-
                 val lines = result.simpleText.split("\n").filter { it.isNotBlank() }
 
                 val words = mutableListOf<String>()
                 val boxes = mutableListOf<FloatArray>()
-
-                // 记录每个 OCR 词的起始字符位置（用于后续分词对齐）
                 val charPositions = mutableListOf<Int>()
                 var charOffset = 0
 
@@ -313,7 +543,6 @@ class MainActivity : AppCompatActivity() {
                         words.add(word)
                         charPositions.add(charOffset)
                         charOffset += word.length
-
                         val pts = item.points
                         val fPts = FloatArray(pts.size * 2)
                         for (i in pts.indices) {
@@ -324,21 +553,14 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                // 拼接完整文本用于结巴分词
                 val fullText = words.joinToString("")
-
-                // 执行结巴分词（在后台线程）
                 val segResult = try {
                     segmentBs.segment(fullText, SegmentResultHandlers.word()) as List<String>
                 } catch (e: Exception) {
-                    Log.e(TAG, "分词失败，回退到原始分词", e)
+                    Log.e(TAG, "分词失败", e)
                     words
                 }
-
-                // 将分词结果映射到 OCR box
                 val segWords = mapSegmentToBoxes(segResult, words, charPositions)
-
-                // 计算每行包含哪些 box 索引（按 Y 坐标中位数分组）
                 val lineBoxGroups = computeLineBoxGroups(boxes)
 
                 runOnUiThread {
@@ -360,29 +582,22 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    /**
-     * 根据 box 的 Y 坐标中位数，将 box 分组到不同的行
-     */
     private fun computeLineBoxGroups(boxes: List<FloatArray>): List<List<Int>> {
         if (boxes.isEmpty()) return emptyList()
-
-        // 计算每个 box 的 Y 中位数
         data class BoxYInfo(val index: Int, val yMedian: Float)
         val boxYInfos = boxes.mapIndexed { idx, box ->
             val ys = floatArrayOf(box[1], box[3], box[5], box[7])
             BoxYInfo(idx, ys.sorted().let { (it[1] + it[2]) / 2f })
         }.sortedBy { it.yMedian }
 
-        // 按 Y 中位数聚类（相邻差值 < 阈值视为同一行）
         val groups = mutableListOf<MutableList<Int>>()
         var currentGroup = mutableListOf(boxYInfos[0].index)
         var currentY = boxYInfos[0].yMedian
-
-        val threshold = 15f // 同行判定阈值（像素）
+        val threshold = 15f
 
         for (i in 1 until boxYInfos.size) {
             val info = boxYInfos[i]
-            if (abs(info.yMedian - currentY) < threshold) {
+            if (kotlin.math.abs(info.yMedian - currentY) < threshold) {
                 currentGroup.add(info.index)
             } else {
                 groups.add(currentGroup)
@@ -392,7 +607,6 @@ class MainActivity : AppCompatActivity() {
         }
         groups.add(currentGroup)
 
-        // 每行内按 X 坐标排序
         return groups.map { group ->
             group.sortedBy { idx ->
                 val box = boxes[idx]
@@ -401,42 +615,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * 将结巴分词结果映射到 OCR box 索引
-     */
     private fun mapSegmentToBoxes(
         segWords: List<String>,
         ocrWords: List<String>,
         charPositions: List<Int>
     ): List<WordInfo> {
         if (ocrWords.isEmpty()) return emptyList()
-
         val result = mutableListOf<WordInfo>()
         var segCharOffset = 0
-
         for (segWord in segWords) {
-            if (segWord.isBlank()) {
-                segCharOffset += segWord.length
-                continue
-            }
-
+            if (segWord.isBlank()) { segCharOffset += segWord.length; continue }
             val boxIndices = mutableListOf<Int>()
-
             for (i in ocrWords.indices) {
                 val ocrStart = charPositions[i]
                 val ocrEnd = ocrStart + ocrWords[i].length
-                val segStart = segCharOffset
-                val segEnd = segCharOffset + segWord.length
-
-                if (ocrStart < segEnd && ocrEnd > segStart) {
+                if (ocrStart < segCharOffset + segWord.length && ocrEnd > segCharOffset) {
                     boxIndices.add(i)
                 }
             }
-
             result.add(WordInfo(segWord, boxIndices))
             segCharOffset += segWord.length
         }
-
         return result
     }
 
@@ -446,57 +645,38 @@ class MainActivity : AppCompatActivity() {
         currentBitmap = bitmap
         ivPreview.setImageBitmap(bitmap)
         emptyState.visibility = View.GONE
-
-        if (isModelLoaded) {
-            recognizeImage()
-        } else {
-            tvStatus.text = "请先加载模型"
-        }
+        if (isModelLoaded) recognizeImage() else tvStatus.text = "请先加载模型"
     }
 
-    private fun showResultUI(
-        result: OcrResult,
-        lines: List<String>,
-        elapsed: Long,
-        lineBoxGroups: List<List<Int>>
-    ) {
+    private fun showResultUI(result: OcrResult, lines: List<String>, elapsed: Long, lineBoxGroups: List<List<Int>>) {
         panelHome.visibility = View.GONE
         panelResult.visibility = View.VISIBLE
         modeSwitchBar.visibility = View.VISIBLE
         btnBack.visibility = View.VISIBLE
         emptyState.visibility = View.GONE
-
         ivPreview.setImageBitmap(result.imgWithBox)
         currentBitmap = result.imgWithBox
-
-        // 设置 overlay 数据
         setupOverlayBoxes()
         ocrOverlay.setTexts(allResultWords, lines)
         ocrOverlay.setLineIndices(lineBoxGroups)
-
         tvTime.text = "${elapsed}ms · ${segmentedWords.size} 个词 · ${lines.size} 行"
-
         tvResult.text = lines.joinToString("\n")
-
         switchMode(0)
     }
 
     private fun setupOverlayBoxes() {
         val iv = ivPreview
-
         val matrix = Matrix()
         val drawable = iv.drawable ?: return
         val viewW = iv.width.toFloat()
         val viewH = iv.height.toFloat()
         val imgW = drawable.intrinsicWidth.toFloat()
         val imgH = drawable.intrinsicHeight.toFloat()
-
         val scale = minOf(viewW / imgW, viewH / imgH)
         val dx = (viewW - imgW * scale) / 2f
         val dy = (viewH - imgH * scale) / 2f
         matrix.setScale(scale, scale)
         matrix.postTranslate(dx, dy)
-
         val imageRect = RectF(dx, dy, dx + imgW * scale, dy + imgH * scale)
         ocrOverlay.setBoxes(allResultBoxes, matrix, imageRect)
     }
@@ -519,83 +699,73 @@ class MainActivity : AppCompatActivity() {
     private fun switchMode(mode: Int) {
         currentMode = mode
         selectedText = ""
-
-        // 更新模式按钮样式
         when (mode) {
             0 -> {
                 btnModeBox.setBackgroundResource(R.drawable.bg_mode_active)
                 btnModeBox.setTextColor(Color.WHITE)
-                btnModeLine.setBackgroundResource(0)
-                btnModeLine.setTextColor(Color.parseColor("#80FFFFFF"))
-                btnModeWord.setBackgroundResource(0)
-                btnModeWord.setTextColor(Color.parseColor("#80FFFFFF"))
+                btnModeLine.setBackgroundResource(0); btnModeLine.setTextColor(Color.parseColor("#80FFFFFF"))
+                btnModeWord.setBackgroundResource(0); btnModeWord.setTextColor(Color.parseColor("#80FFFFFF"))
             }
             1 -> {
                 btnModeLine.setBackgroundResource(R.drawable.bg_mode_active)
                 btnModeLine.setTextColor(Color.WHITE)
-                btnModeBox.setBackgroundResource(0)
-                btnModeBox.setTextColor(Color.parseColor("#80FFFFFF"))
-                btnModeWord.setBackgroundResource(0)
-                btnModeWord.setTextColor(Color.parseColor("#80FFFFFF"))
+                btnModeBox.setBackgroundResource(0); btnModeBox.setTextColor(Color.parseColor("#80FFFFFF"))
+                btnModeWord.setBackgroundResource(0); btnModeWord.setTextColor(Color.parseColor("#80FFFFFF"))
             }
             2 -> {
                 btnModeWord.setBackgroundResource(R.drawable.bg_mode_active)
                 btnModeWord.setTextColor(Color.WHITE)
-                btnModeBox.setBackgroundResource(0)
-                btnModeBox.setTextColor(Color.parseColor("#80FFFFFF"))
-                btnModeLine.setBackgroundResource(0)
-                btnModeLine.setTextColor(Color.parseColor("#80FFFFFF"))
+                btnModeBox.setBackgroundResource(0); btnModeBox.setTextColor(Color.parseColor("#80FFFFFF"))
+                btnModeLine.setBackgroundResource(0); btnModeLine.setTextColor(Color.parseColor("#80FFFFFF"))
             }
         }
-
-        // 更新内容面板
         when (mode) {
             0 -> {
-                // 框选模式：显示文字结果，overlay 为 LINE 模式（显示所有框）
-                wordContainer.visibility = View.GONE
-                resultScroll.visibility = View.VISIBLE
+                wordContainer.visibility = View.GONE; resultScroll.visibility = View.VISIBLE
                 tvResult.text = allResultLines.joinToString("\n")
                 ocrOverlay.setMode(OcrOverlayView.OcrMode.FRAME)
-                ocrOverlay.clearSelection()
-                tvWordsBtnLabel.text = "分词"
+                ocrOverlay.clearSelection(); tvWordsBtnLabel.text = "分词"
             }
             1 -> {
-                // 逐行模式：显示文字结果，overlay 为 LINE 模式（显示行框，点击选行）
-                wordContainer.visibility = View.GONE
-                resultScroll.visibility = View.VISIBLE
+                wordContainer.visibility = View.GONE; resultScroll.visibility = View.VISIBLE
                 tvResult.text = allResultLines.joinToString("\n")
                 ocrOverlay.setMode(OcrOverlayView.OcrMode.LINE)
-                ocrOverlay.clearSelection()
-                tvWordsBtnLabel.text = "分词"
+                ocrOverlay.clearSelection(); tvWordsBtnLabel.text = "分词"
             }
             2 -> {
-                // 分词模式：底部 chip 网格，overlay 为 WORD 模式
-                wordContainer.visibility = View.VISIBLE
-                resultScroll.visibility = View.GONE
+                wordContainer.visibility = View.VISIBLE; resultScroll.visibility = View.GONE
                 wordAdapter.setWordInfos(segmentedWords)
                 ocrOverlay.setMode(OcrOverlayView.OcrMode.WORD)
-                ocrOverlay.clearSelection()
-                tvWordsBtnLabel.text = "逐行"
+                ocrOverlay.clearSelection(); tvWordsBtnLabel.text = "逐行"
             }
         }
     }
 
-    // ======================== 选择回调 ========================
-
-    /** 分词模式下底部 chip 选择变化 */
     private fun onWordAdapterSelectionChanged() {
         val selectedInfos = wordAdapter.getSelectedWordInfos()
         if (selectedInfos.isNotEmpty()) {
             val boxIndices = mutableSetOf<Int>()
-            selectedInfos.forEach { info ->
-                info.boxIndices.forEach { boxIndices.add(it) }
-            }
+            selectedInfos.forEach { info -> info.boxIndices.forEach { boxIndices.add(it) } }
             ocrOverlay.setSelectedIndices(boxIndices)
             selectedText = wordAdapter.getSelectedText()
         } else {
             ocrOverlay.setSelectedIndices(emptySet())
             selectedText = ""
         }
+    }
+
+    private fun selectAllBoxes() {
+        val all = (allResultWords.indices).toSet()
+        ocrOverlay.setSelectedIndices(all)
+        selectedText = allResultWords.joinToString("")
+        updateTvResultHighlight()
+    }
+
+    private fun selectAllLines() {
+        val all = (allResultLines.indices).toSet()
+        ocrOverlay.setSelectedIndices(all)
+        selectedText = allResultLines.joinToString("\n")
+        updateTvResultHighlight()
     }
 
     // ======================== 复制 & 分享 ========================
@@ -606,7 +776,6 @@ class MainActivity : AppCompatActivity() {
             currentMode == 2 -> segmentedWords.joinToString("") { it.text }
             else -> resultText
         }
-
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("OCR结果", text))
         Toast.makeText(this, "✅ 已复制", Toast.LENGTH_SHORT).show()
@@ -618,7 +787,6 @@ class MainActivity : AppCompatActivity() {
             currentMode == 2 -> segmentedWords.joinToString("") { it.text }
             else -> resultText
         }
-
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
@@ -652,5 +820,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         if (isModelLoaded) ocr.releaseModel()
         try { segmentBs.destroy() } catch (_: Exception) {}
+        downloadExecutor.shutdownNow()
     }
 }

@@ -55,9 +55,21 @@
                 android:background="@drawable/bg_spinner"
                 android:popupBackground="@color/md_theme_surface" />
 
-            <View
-                android:layout_width="8dp"
-                android:layout_height="0dp" />
+            <!-- 模型下载按钮：语言未预装时显示 -->
+            <TextView
+                android:id="@+id/btn_download_model"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:paddingHorizontal="10dp"
+                android:text="下载"
+                android:textSize="11sp"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_download_btn"
+                android:drawableStart="@drawable/ic_download_cloud"
+                android:drawablePadding="3dp"
+                android:drawableTint="#FFFFFF"
+                android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/btn_more"
