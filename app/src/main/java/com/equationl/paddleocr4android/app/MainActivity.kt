@@ -65,31 +65,6 @@ class MainActivity : AppCompatActivity() {
             recUrl = "https://paddleocr.bj.bcebos.com/PP-OCRv3/english/en_PP-OCRv3_rec_slim_infer.nb",
             label = "可下载 · 3.3MB"
         ),
-        "日本語" to LangModel(
-            dir = "japan_PP-OCRv3",
-            recUrl = null,
-            label = "暂不支持（需要 .nb 格式模型）"
-        ),
-        "한국어" to LangModel(
-            dir = "korean_PP-OCRv3",
-            recUrl = null,
-            label = "暂不支持（需要 .nb 格式模型）"
-        ),
-        "Français" to LangModel(
-            dir = "latin_PP-OCRv3",
-            recUrl = null,
-            label = "暂不支持（需要 .nb 格式模型）"
-        ),
-        "Deutsch" to LangModel(
-            dir = "latin_PP-OCRv3",
-            recUrl = null,
-            label = "暂不支持（需要 .nb 格式模型）"
-        ),
-        "Русский" to LangModel(
-            dir = "cyrillic_PP-OCRv3",
-            recUrl = null,
-            label = "暂不支持（需要 .nb 格式模型）"
-        ),
     )
 
     data class LangModel(
