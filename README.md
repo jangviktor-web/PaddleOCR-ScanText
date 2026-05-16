@@ -121,6 +121,35 @@ cd PaddleOCR-ScanText
 - [Material Components](https://github.com/material-components/material-components-android) — Google Material Design UI 组件
 - [AndroidX](https://github.com/androidx/androidx) — Jetpack Android 基础库
 
+## 更新日志
+
+### v2.3.0（2026-05-16）
+- 升级至 PP-OCRv5 引擎，单模型覆盖中文、英文、日文、繁体中文
+- 移除单独的日语、繁体中文、中英 PP-OCRv4 模型，APK 从 102MB 降至 61MB
+- 保留韩语 PP-OCRv3 选项（PP-OCRv5 不支持韩文）
+
+### v2.2.0（2026-05-16）
+- 新增「更多」页面，包含识别历史和关于功能
+- 识别历史：Room 数据库自动保存记录，支持查看、删除、清空
+- 关于弹窗：展示应用信息与开源项目致谢
+- 修复返回按钮不清空图片和结果的问题
+- 修复 APK 签名问题，使用 gradle 签名配置
+
+### v2.1（2026-05-16）
+- 内置多语言模型（中英日韩繁体），无需额外下载
+- 移除模型下载功能，开箱即用
+- 优化交互体验
+
+### v2.0（2026-05-16）
+- 全面升级 UI 至 Material Design 3
+- 集成结巴中文分词引擎
+- 新增图片触摸交互：框选、逐行、分词三种模式
+- 支持多语言切换（中文、英文、日文、韩文、繁体中文）
+
+### v1.0（2026-02-11）
+- 初始版本，基础 OCR 文字识别功能
+- JitPack CI 构建支持
+
 ## License
 
 MIT License
