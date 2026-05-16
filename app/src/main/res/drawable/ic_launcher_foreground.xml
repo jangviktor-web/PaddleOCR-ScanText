@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- ===== 白色文档 ===== -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,24 Q32,21 35,21 L73,21 Q76,21 76,24 L76,84 Q76,87 73,87 L35,87 Q32,87 32,84 Z" />
+
+    <!-- ===== 文字行 ===== -->
+    <!-- 第1行 -->
+    <path
+        android:fillColor="#1A237E"
+        android:pathData="M38,31 L70,31 Q71,31 71,32 L71,34.5 Q71,35.5 70,35.5 L38,35.5 Q37,35.5 37,34.5 L37,32 Q37,31 38,31 Z" />
+    <!-- 第2行 -->
+    <path
+        android:fillColor="#3949AB"
+        android:pathData="M38,39 L62,39 Q63,39 63,40 L63,42.5 Q63,43.5 62,43.5 L38,43.5 Q37,43.5 37,42.5 L37,40 Q37,39 38,39 Z" />
+    <!-- 第3行（被扫描线覆盖） -->
+    <path
+        android:fillColor="#5C6BC0"
+        android:pathData="M38,47 L66,47 Q67,47 67,48 L67,50.5 Q67,51.5 66,51.5 L38,51.5 Q37,51.5 37,50.5 L37,48 Q37,47 38,47 Z" />
+    <!-- 第4行 -->
+    <path
+        android:fillColor="#1A237E"
+        android:pathData="M38,55 L72,55 Q73,55 73,56 L73,58.5 Q73,59.5 72,59.5 L38,59.5 Q37,59.5 37,58.5 L37,56 Q37,55 38,55 Z" />
+    <!-- 第5行 -->
+    <path
+        android:fillColor="#3949AB"
+        android:pathData="M38,63 L58,63 Q59,63 59,64 L59,66.5 Q59,67.5 58,67.5 L38,67.5 Q37,67.5 37,66.5 L37,64 Q37,63 38,63 Z" />
+    <!-- 第6行 -->
+    <path
+        android:fillColor="#7986CB"
+        android:pathData="M38,71 L50,71 Q51,71 51,72 L51,74.5 Q51,75.5 50,75.5 L38,75.5 Q37,75.5 37,74.5 L37,72 Q37,71 38,71 Z" />
+
+    <!-- ===== 扫描线光晕 ===== -->
+    <path
+        android:fillColor="#3000BCD4"
+        android:pathData="M26,46 L82,46 L82,52 L26,52 Z" />
+
+    <!-- ===== 扫描线（亮青色） ===== -->
+    <path
+        android:fillColor="#00BCD4"
+        android:pathData="M26,48.5 L82,48.5 L82,49.5 L26,49.5 Z" />
+
+    <!-- ===== 取景器四角标记 ===== -->
+    <!-- 左上 -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M24,32 L24,24 L32,24"
+        android:strokeWidth="2.5"
+        android:strokeColor="#00E5FF" />
+    <!-- 右上 -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M76,24 L84,24 L84,32"
+        android:strokeWidth="2.5"
+        android:strokeColor="#00E5FF" />
+    <!-- 左下 -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M24,76 L24,84 L32,84"
+        android:strokeWidth="2.5"
+        android:strokeColor="#00E5FF" />
+    <!-- 右下 -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M76,84 L84,84 L84,76"
+        android:strokeWidth="2.5"
+        android:strokeColor="#00E5FF" />
+
+</vector>

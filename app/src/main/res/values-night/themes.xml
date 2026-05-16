@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.PaddleOCR4Android" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary -->
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorPrimaryContainer">#004A77</item>
+        <item name="colorOnPrimaryContainer">#D1E4FF</item>
+
+        <!-- Secondary -->
+        <item name="colorSecondary">#BCC7DB</item>
+        <item name="colorOnSecondary">#263141</item>
+        <item name="colorSecondaryContainer">#3C4758</item>
+        <item name="colorOnSecondaryContainer">#D8E3F8</item>
+
+        <!-- Tertiary -->
+        <item name="colorTertiary">#DBBCE3</item>
+        <item name="colorOnTertiary">#3D2944</item>
+        <item name="colorTertiaryContainer">#543F5C</item>
+        <item name="colorOnTertiaryContainer">#F8D8FE</item>
+
+        <!-- Error -->
+        <item name="colorError">#FFB4AB</item>
+        <item name="colorOnError">#690005</item>
+        <item name="colorErrorContainer">#93000A</item>
+        <item name="colorOnErrorContainer">#FFDAD6</item>
+
+        <!-- Surface -->
+        <item name="android:colorBackground">#1A1C1E</item>
+        <item name="colorOnBackground">#E2E1E6</item>
+        <item name="colorSurface">#1A1C1E</item>
+        <item name="colorOnSurface">#E2E1E6</item>
+        <item name="colorSurfaceVariant">#43474E</item>
+        <item name="colorOnSurfaceVariant">#C3C6CF</item>
+
+        <!-- Surface containers (dark) -->
+        <item name="colorSurfaceDim">#1A1C1E</item>
+        <item name="colorSurfaceBright">#3F4043</item>
+        <item name="colorSurfaceContainerLowest">#0F1113</item>
+        <item name="colorSurfaceContainerLow">#1A1C1E</item>
+        <item name="colorSurfaceContainer">#1E2023</item>
+        <item name="colorSurfaceContainerHigh">#282A2D</item>
+        <item name="colorSurfaceContainerHighest">#333537</item>
+
+        <!-- Outline -->
+        <item name="colorOutline">#8D9199</item>
+        <item name="colorOutlineVariant">#43474E</item>
+
+        <!-- Inverse -->
+        <item name="colorSurfaceInverse">#E2E1E6</item>
+        <item name="colorOnSurfaceInverse">#2F3033</item>
+        <item name="colorPrimaryInverse">#0061A4</item>
+
+        <!-- Scrim -->
+        <item name="colorScrim">@color/md_theme_scrim</item>
+
+        <!-- Status bar -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+    </style>
+
+</resources>
