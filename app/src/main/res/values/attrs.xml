@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- colorScrim attr referenced by MaterialComponents DayNight themes but not declared -->
+    <attr name="colorScrim" format="color" />
+</resources>
