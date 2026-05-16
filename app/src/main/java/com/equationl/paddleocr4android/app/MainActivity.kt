@@ -340,6 +340,10 @@ class MainActivity : AppCompatActivity() {
         wordContainer.visibility = View.GONE; modeSwitchBar.visibility = View.GONE
         btnBack.visibility = View.GONE; emptyState.visibility = View.VISIBLE
         ocrOverlay.clear()
+        ivPreview.setImageBitmap(null)
+        currentBitmap = null
+        allResultBoxes = emptyList(); allResultWords = emptyList(); allResultLines = emptyList()
+        segmentedWords = emptyList(); resultText = ""
         tvStatus.text = if (isModelLoaded) "拍照或从相册选图" else "请先加载模型"
         currentMode = 0; selectedText = ""
     }
