@@ -43,10 +43,8 @@ class MainActivity : AppCompatActivity() {
     private data class LangInfo(val modelDir: String, val labelPath: String)
 
     private val languageConfig = linkedMapOf(
-        "中文 + English" to LangInfo("ch_PP-OCRv4", "labels/ppocr_keys_v1.txt"),
-        "日本語" to LangInfo("japan_PP-OCRv3", "labels/japan_dict.txt"),
+        "中英 日PP-OCRv5" to LangInfo("PP-OCRv5_mobile", "labels/ppocr_keys_ocrv5.txt"),
         "한국어" to LangInfo("korean_PP-OCRv3", "labels/korean_dict.txt"),
-        "繁體中文" to LangInfo("chinese_cht_PP-OCRv3", "labels/chinese_cht_dict.txt"),
     )
 
     private lateinit var ivPreview: ImageView
