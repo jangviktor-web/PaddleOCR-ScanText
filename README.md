@@ -36,7 +36,8 @@
 
 ## 截图
 
-![OCR 识别界面](/doc/screenshot4.png)
+<img width="2057" height="1440" alt="20260516-175830" src="https://github.com/user-attachments/assets/68be9ac2-1681-489f-a69b-bf5ad520968c" />
+
 
 ## 技术架构
 
