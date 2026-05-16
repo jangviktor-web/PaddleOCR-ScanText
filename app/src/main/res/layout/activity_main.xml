@@ -55,22 +55,6 @@
                 android:background="@drawable/bg_spinner"
                 android:popupBackground="@color/md_theme_surface" />
 
-            <!-- 模型下载按钮：语言未预装时显示 -->
-            <TextView
-                android:id="@+id/btn_download_model"
-                android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:gravity="center"
-                android:paddingHorizontal="10dp"
-                android:text="下载"
-                android:textSize="11sp"
-                android:textColor="#FFFFFF"
-                android:background="@drawable/bg_download_btn"
-                android:drawableStart="@drawable/ic_download_cloud"
-                android:drawablePadding="3dp"
-                android:drawableTint="#FFFFFF"
-                android:visibility="gone" />
-
             <ImageView
                 android:id="@+id/btn_more"
                 android:layout_width="40dp"
@@ -284,30 +268,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="相册"
-                        android:textSize="12sp"
-                        android:textColor="@color/md_theme_onSurface" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/btn_load_model"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:background="@drawable/selector_ripple"
-                    android:paddingVertical="12dp">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_download"
-                        android:layout_marginBottom="4dp" />
-                    <TextView
-                        android:id="@+id/tv_model_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="模型"
                         android:textSize="12sp"
                         android:textColor="@color/md_theme_onSurface" />
                 </LinearLayout>
