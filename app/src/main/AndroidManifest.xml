@@ -25,6 +25,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".MoreActivity" />
+        <activity android:name=".HistoryActivity" />
+
         <!-- FileProvider: 拍照功能需要 -->
         <provider
             android:name="androidx.core.content.FileProvider"

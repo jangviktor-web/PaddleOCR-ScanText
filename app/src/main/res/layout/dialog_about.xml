@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PaddleOCR-ScanText"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_onSurface"
+        android:layout_gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="v2.2.0"
+        android:textSize="14sp"
+        android:textColor="@color/md_theme_outline"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="基于 PaddleOCR 的多语言文字识别工具"
+        android:textSize="14sp"
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="支持语言：中文+English / 日本語 / 한국어 / 繁體中文"
+        android:textSize="13sp"
+        android:textColor="@color/md_theme_outline"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_theme_outline"
+        android:layout_marginVertical="16dp"
+        android:alpha="0.2" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="致谢开源项目"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_onSurface" />
+
+    <TextView
+        android:id="@+id/tv_about_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        android:lineSpacingMultiplier="1.5"
+        android:layout_marginTop="8dp"
+        android:text="• PaddleOCR — 百度飞桨 OCR 识别引擎\nhttps://github.com/PaddlePaddle/PaddleOCR\n\n• Paddle Lite — 百度飞桨移动端推理框架\nhttps://github.com/PaddlePaddle/Paddle-Lite\n\n• paddleocr4android — equationl 的 Android 封装库\nhttps://github.com/equationl/PaddleOCR4Android\n\n• segment — houbb 的中文分词库\nhttps://github.com/houbb/segment\n\n• Material Components — Google Material Design UI 组件\nhttps://github.com/material-components/material-components-android\n\n• AndroidX — Jetpack Android 基础库\nhttps://github.com/androidx/androidx" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="感谢以上开源项目对本项目的支持"
+        android:textSize="12sp"
+        android:textColor="@color/md_theme_outline"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp" />
+</LinearLayout>

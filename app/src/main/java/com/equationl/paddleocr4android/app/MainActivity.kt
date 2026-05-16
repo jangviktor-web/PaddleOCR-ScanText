@@ -26,7 +26,12 @@ import com.equationl.paddleocr4android.callback.OcrRunCallback
 import com.github.houbb.segment.bs.SegmentBs
 import com.github.houbb.segment.support.segment.result.impl.SegmentResultHandlers
 import java.io.File
+import java.io.FileOutputStream
 import kotlin.math.abs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class WordInfo(val text: String, val boxIndices: List<Int>)
 
@@ -81,6 +86,8 @@ class MainActivity : AppCompatActivity() {
     private var selectedText: String = ""
 
     private val segmentBs: SegmentBs by lazy { SegmentBs.newInstance() }
+    private val scope = CoroutineScope(Dispatchers.Main)
+    private val db by lazy { HistoryDatabase.getInstance(this) }
 
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && currentPhotoUri != null) loadBitmapFromUri(currentPhotoUri!!)?.let { showImage(it) }
@@ -177,6 +184,9 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.btn_gallery_home).setOnClickListener { galleryLauncher.launch("image/*") }
         btnBack.setOnClickListener { resetToCapture() }
+        findViewById<ImageView>(R.id.btn_more).setOnClickListener {
+            startActivity(Intent(this, MoreActivity::class.java))
+        }
         btnModeBox.setOnClickListener { switchMode(0) }
         btnModeLine.setOnClickListener { switchMode(1) }
         btnModeWord.setOnClickListener { switchMode(2) }
@@ -263,6 +273,7 @@ class MainActivity : AppCompatActivity() {
                     allResultBoxes = boxes; allResultWords = words; allResultLines = lines
                     segmentedWords = sw; resultText = lines.joinToString("\n")
                     showResultUI(result, lines, el, lbg)
+                    saveToHistory(lines.joinToString("\n"))
                 }
             }
             override fun onFail(e: Throwable) = runOnUiThread {
@@ -425,6 +436,27 @@ class MainActivity : AppCompatActivity() {
             Bitmap.createScaledBitmap(bmp, (bmp.width * s).toInt(), (bmp.height * s).toInt(), true)
         } else bmp
     } catch (e: Exception) { tvStatus.text = "加载图片失败: ${e.message}"; null }
+
+    private fun saveToHistory(text: String) {
+        val bmp = currentBitmap ?: return
+        scope.launch {
+            try {
+                val imagePath = withContext(Dispatchers.IO) {
+                    val dir = File(filesDir, "history_images")
+                    dir.mkdirs()
+                    val file = File(dir, "ocr_${System.currentTimeMillis()}.jpg")
+                    FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.JPEG, 80, it) }
+                    file.absolutePath
+                }
+                val lang = spinnerLang.selectedItem as? String ?: "未知"
+                withContext(Dispatchers.IO) {
+                    db.historyDao().insert(HistoryEntity(imagePath = imagePath, text = text, language = lang))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "保存历史失败", e)
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
