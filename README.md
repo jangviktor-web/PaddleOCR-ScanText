@@ -1,4 +1,5 @@
 # PaddleOCR4Android
+n> **[English Version](./README_EN.md)**
 ### 基于PaddleOCR的Android离线OCR文字识别应用
 
 一款将强大PaddleOCR引擎封装为易于使用的Android应用，**无需联网**，支持**中、英、日、韩及繁体中文**等多语言实时识别。
