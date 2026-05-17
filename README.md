@@ -1,4 +1,4 @@
-# PaddleOCR-ScanText — 离线多语言 OCR 文字识别
+# PaddleOCR4Android — 离线多语言 OCR 文字识别
 
 基于 PaddleOCR 的离线文字识别 Android 应用，支持中英日繁体及韩文，无需联网即可使用。
 
@@ -6,8 +6,8 @@
 
 | 版本 | 下载 |
 |------|------|
-| **v2.3.0**（最新） | [PaddleOCR-v2.3.0-original.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.3.0/PaddleOCR-v2.3.0-original.apk) |
-| v2.2.0 | [app-v2.2.0-more.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.2.0/app-v2.2.0-more.apk) |
+| **v2.3.0**（最新） | [PaddleOCR-v2.3.0-original.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.3.0/PaddleOCR-v2.3.0-original.apk) |
+| v2.2.0 | [app-v2.2.0-more.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.2.0/app-v2.2.0-more.apk) |
 
 > APK 大小约 61MB，已内置全部语言模型，安装即可使用。
 
@@ -75,8 +75,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/jangviktor-web/PaddleOCR-ScanText.git
-cd PaddleOCR-ScanText
+git clone https://github.com/jangviktor-web/PaddleOCR4Android.git
+cd PaddleOCR4Android
 
 # 编译 Release APK（需配置签名）
 ./gradlew assembleRelease
