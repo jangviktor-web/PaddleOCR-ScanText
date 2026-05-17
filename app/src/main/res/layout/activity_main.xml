@@ -71,7 +71,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="4"
-        android:background="#000000">
+        android:background="@color/md_theme_surface">
 
         <ImageView
             android:id="@+id/iv_preview"
@@ -169,16 +169,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="分词"
-                android:textSize="13sp"
-                android:textColor="#80FFFFFF"
-                android:paddingHorizontal="24dp"
-                android:paddingVertical="8dp" />
-
-            <TextView
-                android:id="@+id/btn_mode_layout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="版面"
                 android:textSize="13sp"
                 android:textColor="#80FFFFFF"
                 android:paddingHorizontal="24dp"
@@ -354,21 +344,25 @@
                         android:textIsSelectable="true" />
                 </ScrollView>
 
-                <!-- 分词网格（可滚动） -->
+                <!-- 分词流式布局（可滚动） -->
                 <FrameLayout
                     android:id="@+id/word_container"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:visibility="gone">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rv_words"
+                    <ScrollView
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="4dp"
-                        android:clipToPadding="false"
-                        android:overScrollMode="never" />
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        android:clipToPadding="false">
+
+                        <com.equationl.paddleocr4android.app.FlowLayout
+                            android:id="@+id/flow_words"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </ScrollView>
 
                     <TextView
                         android:id="@+id/btn_select_all"

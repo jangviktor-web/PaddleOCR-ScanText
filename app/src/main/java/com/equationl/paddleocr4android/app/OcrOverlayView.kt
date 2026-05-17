@@ -6,13 +6,16 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * OCR 结果覆盖层：在图片上绘制文字检测框，支持触摸选择
  *
  * 模式：
- * - FRAME / LINE：显示所有框，点击可选择一行
- * - WORD：根据 selectedIndices 高亮选中的框（由分词模式驱动）
+ * - FRAME：手指拖动画矩形，框内所有文字一次性选中
+ * - LINE：点击一行选中整行，可连续点击累加选择
+ * - WORD：逐词选择（由分词面板驱动）
  */
 class OcrOverlayView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyle: Int = 0
@@ -52,6 +55,19 @@ class OcrOverlayView @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
 
+    // 框选拖拽矩形画笔
+    private val dragRectFillPaint = Paint().apply {
+        color = Color.parseColor("#22165DFF")
+        style = Paint.Style.FILL
+    }
+
+    private val dragRectStrokePaint = Paint().apply {
+        color = Color.parseColor("#FF165DFF")
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+        pathEffect = DashPathEffect(floatArrayOf(12f, 8f), 0f)
+    }
+
     // OCR 返回的点位列表：每个元素是一组点 (8个 float：4个角点 x,y)
     private var wordBoxes: List<FloatArray> = emptyList()
     private var imageMatrix: Matrix? = null
@@ -64,16 +80,25 @@ class OcrOverlayView @JvmOverloads constructor(
     private var allLines: List<String> = emptyList()
 
     // 行数据
-    private var lineIndices: List<List<Int>> = emptyList() // 每行包含的 box 索引
-    private var lineRects: List<RectF> = emptyList()        // 每行的矩形区域（屏幕坐标）
-    private var selectedLineIndex: Int = -1                 // 当前选中的行号
+    private var lineIndices: List<List<Int>> = emptyList()
+    private var lineRects: List<RectF> = emptyList()
+    private val selectedLineIndices = mutableSetOf<Int>()
 
     // 触摸反馈
-    private var touchDownBoxIndex: Int = -1                 // 按下时的 box 索引（用于按压反馈）
+    private var touchDownBoxIndex: Int = -1
+
+    // 框选拖拽状态
+    private var isDragging = false
+    private var dragStartX = 0f
+    private var dragStartY = 0f
+    private var dragEndX = 0f
+    private var dragEndY = 0f
+    private var isDragShort = true // 拖拽距离过短视为点击
 
     // 回调
     var onLineSelected: ((lineIndex: Int, lineText: String) -> Unit)? = null
     var onBoxSelected: ((boxIndex: Int, boxText: String) -> Unit)? = null
+    var onMultiBoxSelected: ((indices: Set<Int>, text: String) -> Unit)? = null
 
     enum class OcrMode { FRAME, LINE, WORD }
 
@@ -90,12 +115,20 @@ class OcrOverlayView @JvmOverloads constructor(
         invalidate()
     }
 
+    fun selectAllLines() {
+        selectedLineIndices.clear()
+        selectedLineIndices.addAll(lineIndices.indices)
+        selectedIndices = wordBoxes.indices.toSet()
+        invalidate()
+    }
+
     fun getSelectedIndices(): Set<Int> = selectedIndices
 
     fun setMode(mode: OcrMode) {
         this.mode = mode
-        this.selectedLineIndex = -1
+        this.selectedLineIndices.clear()
         this.touchDownBoxIndex = -1
+        this.isDragging = false
         computeLineRects()
         invalidate()
     }
@@ -112,8 +145,9 @@ class OcrOverlayView @JvmOverloads constructor(
 
     fun clearSelection() {
         selectedIndices = emptySet()
-        selectedLineIndex = -1
+        selectedLineIndices.clear()
         touchDownBoxIndex = -1
+        isDragging = false
         invalidate()
     }
 
@@ -124,8 +158,9 @@ class OcrOverlayView @JvmOverloads constructor(
         allLines = emptyList()
         lineIndices = emptyList()
         lineRects = emptyList()
-        selectedLineIndex = -1
+        selectedLineIndices.clear()
         touchDownBoxIndex = -1
+        isDragging = false
         invalidate()
     }
 
@@ -177,20 +212,47 @@ class OcrOverlayView @JvmOverloads constructor(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                touchDownBoxIndex = findBoxAtPoint(event.x, event.y)
-                if (touchDownBoxIndex >= 0) {
-                    invalidate()
-                    return true
-                }
-                // 也检查是否点在行区域上
-                if (mode == OcrMode.LINE || mode == OcrMode.FRAME) {
-                    val lineIdx = findLineAtPoint(event.x, event.y)
-                    if (lineIdx >= 0) {
+                when (mode) {
+                    OcrMode.FRAME -> {
+                        dragStartX = event.x
+                        dragStartY = event.y
+                        dragEndX = event.x
+                        dragEndY = event.y
+                        isDragging = false
+                        isDragShort = true
+                        touchDownBoxIndex = findBoxAtPoint(event.x, event.y)
                         invalidate()
                         return true
                     }
+                    OcrMode.LINE -> {
+                        touchDownBoxIndex = findBoxAtPoint(event.x, event.y)
+                        invalidate()
+                        return true
+                    }
+                    OcrMode.WORD -> {
+                        touchDownBoxIndex = findBoxAtPoint(event.x, event.y)
+                        if (touchDownBoxIndex >= 0) {
+                            invalidate()
+                            return true
+                        }
+                        return false
+                    }
                 }
-                return false
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (mode == OcrMode.FRAME) {
+                    dragEndX = event.x
+                    dragEndY = event.y
+                    val dx = dragEndX - dragStartX
+                    val dy = dragEndY - dragStartY
+                    if (dx * dx + dy * dy > 400f) { // > 20px
+                        isDragging = true
+                        isDragShort = false
+                        touchDownBoxIndex = -1
+                    }
+                    invalidate()
+                    return true
+                }
             }
             MotionEvent.ACTION_UP -> {
                 val downBox = touchDownBoxIndex
@@ -198,45 +260,84 @@ class OcrOverlayView @JvmOverloads constructor(
 
                 when (mode) {
                     OcrMode.FRAME -> {
-                        // 框选模式：点击单个 box 切换选中
-                        val boxIdx = findBoxAtPoint(event.x, event.y)
-                        if (boxIdx >= 0) {
-                            val newSelected = selectedIndices.toMutableSet()
-                            if (boxIdx in newSelected) newSelected.remove(boxIdx)
-                            else newSelected.add(boxIdx)
-                            selectedIndices = newSelected
-                            if (boxIdx < allWords.size) {
-                                onBoxSelected?.invoke(boxIdx, allWords[boxIdx])
+                        if (isDragging) {
+                            // 框选完成：选中矩形内所有 box
+                            val rect = getDragSelectionRect() ?: run {
+                                isDragging = false
+                                invalidate()
+                                return true
                             }
+                            val hitIndices = mutableSetOf<Int>()
+                            for (i in wordBoxes.indices) {
+                                if (isBoxCenterInRect(i, rect)) {
+                                    hitIndices.add(i)
+                                }
+                            }
+                            selectedIndices = hitIndices
+                            isDragging = false
+                            // 拼接选中框的文字
+                            val text = hitIndices.sorted().joinToString("") { i ->
+                                if (i < allWords.size) allWords[i] else ""
+                            }
+                            onMultiBoxSelected?.invoke(hitIndices, text)
                             invalidate()
                             return true
+                        } else {
+                            // 短按：点击单个 box 切换选中
+                            val boxIdx = findBoxAtPoint(event.x, event.y)
+                            if (boxIdx >= 0) {
+                                val newSelected = selectedIndices.toMutableSet()
+                                if (boxIdx in newSelected) newSelected.remove(boxIdx)
+                                else newSelected.add(boxIdx)
+                                selectedIndices = newSelected
+                                if (boxIdx < allWords.size) {
+                                    onBoxSelected?.invoke(boxIdx, allWords[boxIdx])
+                                }
+                                invalidate()
+                                return true
+                            }
                         }
                     }
                     OcrMode.LINE -> {
-                        // 逐行模式：点击行区域切换选中
                         val lineIdx = findLineAtPoint(event.x, event.y)
                         if (lineIdx >= 0) {
-                            if (selectedLineIndex == lineIdx) {
-                                // 取消选中
-                                selectedLineIndex = -1
-                                selectedIndices = emptySet()
-                                onLineSelected?.invoke(-1, "")
+                            if (lineIdx in selectedLineIndices) {
+                                // 取消选中该行
+                                selectedLineIndices.remove(lineIdx)
+                                // 重建 selectedIndices
+                                val newSet = mutableSetOf<Int>()
+                                for (li in selectedLineIndices) {
+                                    if (li < lineIndices.size) {
+                                        lineIndices[li].forEach { newSet.add(it) }
+                                    }
+                                }
+                                selectedIndices = newSet
+                                if (selectedLineIndices.isEmpty()) {
+                                    onLineSelected?.invoke(-1, "")
+                                } else {
+                                    val text = selectedLineIndices.sorted().joinToString("\n") { li ->
+                                        if (li < allLines.size) allLines[li] else ""
+                                    }
+                                    onLineSelected?.invoke(lineIdx, text)
+                                }
                             } else {
-                                selectedLineIndex = lineIdx
+                                // 选中该行（累加）
+                                selectedLineIndices.add(lineIdx)
                                 val lineBoxSet = mutableSetOf<Int>()
                                 if (lineIdx < lineIndices.size) {
                                     lineIndices[lineIdx].forEach { lineBoxSet.add(it) }
                                 }
-                                selectedIndices = lineBoxSet
-                                val lineText = if (lineIdx < allLines.size) allLines[lineIdx] else ""
-                                onLineSelected?.invoke(lineIdx, lineText)
+                                selectedIndices = selectedIndices + lineBoxSet
+                                val text = selectedLineIndices.sorted().joinToString("\n") { li ->
+                                    if (li < allLines.size) allLines[li] else ""
+                                }
+                                onLineSelected?.invoke(lineIdx, text)
                             }
                             invalidate()
                             return true
                         }
                     }
                     OcrMode.WORD -> {
-                        // 分词模式：图片上也支持点击选 box
                         val boxIdx = findBoxAtPoint(event.x, event.y)
                         if (boxIdx >= 0 && downBox == boxIdx) {
                             val newSelected = selectedIndices.toMutableSet()
@@ -255,6 +356,7 @@ class OcrOverlayView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_CANCEL -> {
                 touchDownBoxIndex = -1
+                isDragging = false
                 invalidate()
             }
         }
@@ -262,12 +364,39 @@ class OcrOverlayView @JvmOverloads constructor(
     }
 
     /**
-     * 测试触摸点是否在某个 box 的四边形内（凸多边形 hit test）
+     * 获取拖拽选区矩形（屏幕坐标）
+     */
+    private fun getDragSelectionRect(): RectF? {
+        if (!isDragging) return null
+        val left = min(dragStartX, dragEndX)
+        val top = min(dragStartY, dragEndY)
+        val right = max(dragStartX, dragEndX)
+        val bottom = max(dragStartY, dragEndY)
+        if (right - left < 10f || bottom - top < 10f) return null
+        return RectF(left, top, right, bottom)
+    }
+
+    /**
+     * 判断某个 box 的中心点是否在矩形内
+     */
+    private fun isBoxCenterInRect(boxIdx: Int, rect: RectF): Boolean {
+        if (boxIdx >= wordBoxes.size || imageMatrix == null) return false
+        val box = wordBoxes[boxIdx]
+        val mat = imageMatrix!!
+        val pts = floatArrayOf(
+            (box[0] + box[4]) / 2f,
+            (box[1] + box[5]) / 2f
+        )
+        mat.mapPoints(pts)
+        return rect.contains(pts[0], pts[1])
+    }
+
+    /**
+     * 测试触摸点是否在某个 box 的四边形内
      */
     private fun findBoxAtPoint(tx: Float, ty: Float): Int {
         val mat = imageMatrix ?: return -1
 
-        // 从后往前检测，后绘制的在上面
         for (index in wordBoxes.indices.reversed()) {
             val box = wordBoxes[index]
             val pts = FloatArray(8)
@@ -297,11 +426,9 @@ class OcrOverlayView @JvmOverloads constructor(
     }
 
     /**
-     * 判断点 (px,py) 是否在凸多边形内（4 个顶点，顺时针或逆时针）
-     * 使用 cross product 符号一致性检测
+     * 判断点 (px,py) 是否在凸多边形内
      */
     private fun isPointInPolygon(px: Float, py: Float, pts: FloatArray): Boolean {
-        // pts: [x0,y0, x1,y1, x2,y2, x3,y3]
         var sign = 0
         for (i in 0 until 4) {
             val x1 = pts[i * 2]
@@ -327,8 +454,11 @@ class OcrOverlayView @JvmOverloads constructor(
         val mat = imageMatrix!!
 
         when (mode) {
-            OcrMode.LINE, OcrMode.FRAME -> {
+            OcrMode.LINE -> {
                 drawLineMode(canvas, mat)
+            }
+            OcrMode.FRAME -> {
+                drawFrameMode(canvas, mat)
             }
             OcrMode.WORD -> {
                 drawWordMode(canvas, mat)
@@ -337,32 +467,60 @@ class OcrOverlayView @JvmOverloads constructor(
     }
 
     /**
-     * LINE / FRAME 模式：绘制行区域 + 单个 box
+     * 逐行模式：绘制行区域 + 单个 box，支持多行累加选中
      */
     private fun drawLineMode(canvas: Canvas, mat: Matrix) {
-        // 1. 先绘制行区域矩形
+        // 绘制行区域矩形
         for ((lineIdx, rect) in lineRects.withIndex()) {
-            val paint = if (lineIdx == selectedLineIndex) selectedLineStrokePaint else lineStrokePaint
+            val isSelected = lineIdx in selectedLineIndices
+            val paint = if (isSelected) selectedLineStrokePaint else lineStrokePaint
             canvas.drawRect(rect, paint)
-            if (lineIdx == selectedLineIndex) {
+            if (isSelected) {
                 canvas.drawRect(rect, selectedLineFillPaint)
             }
         }
 
-        // 2. 绘制所有 box
+        // 绘制所有 box
         for ((index, box) in wordBoxes.withIndex()) {
             val pts = transformBox(box, mat)
             val path = boxToPath(pts)
 
-            // 选中的 box 加填充
             if (index in selectedIndices) {
                 canvas.drawPath(path, selectedBoxPaint)
             }
             canvas.drawPath(path, boxPaint)
 
-            // 按压反馈
             if (index == touchDownBoxIndex) {
                 canvas.drawPath(path, touchFeedbackPaint)
+            }
+        }
+    }
+
+    /**
+     * 框选模式：绘制 box + 拖拽选区矩形
+     */
+    private fun drawFrameMode(canvas: Canvas, mat: Matrix) {
+        // 绘制所有 box
+        for ((index, box) in wordBoxes.withIndex()) {
+            val pts = transformBox(box, mat)
+            val path = boxToPath(pts)
+
+            if (index in selectedIndices) {
+                canvas.drawPath(path, selectedBoxPaint)
+            }
+            canvas.drawPath(path, boxPaint)
+
+            if (index == touchDownBoxIndex) {
+                canvas.drawPath(path, touchFeedbackPaint)
+            }
+        }
+
+        // 绘制拖拽选区矩形
+        if (isDragging) {
+            val rect = getDragSelectionRect()
+            if (rect != null) {
+                canvas.drawRect(rect, dragRectFillPaint)
+                canvas.drawRect(rect, dragRectStrokePaint)
             }
         }
     }
