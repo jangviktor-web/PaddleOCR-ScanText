@@ -16,7 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install paddlepaddle paddlelite x2paddle onnx onnxsim onnx-graphsurgeon
+          pip install paddlepaddle paddlelite x2paddle onnx onnxsim onnx-graphsurgeon six
 
       - name: Download Korean ONNX model from RapidOCR
         run: |
