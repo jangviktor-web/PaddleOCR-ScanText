@@ -6,7 +6,7 @@
 
 | 版本 | 下载 |
 |------|------|
-| **v2.3.0**（最新） | [PaddleOCR-v2.3.0-PP-OCRv5-v2.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.3.0/PaddleOCR-v2.3.0-PP-OCRv5-v2.apk) |
+| **v2.3.0**（最新） | [PaddleOCR-v2.3.0-original.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.3.0/PaddleOCR-v2.3.0-original.apk) |
 | v2.2.0 | [app-v2.2.0-more.apk](https://github.com/jangviktor-web/PaddleOCR-ScanText/releases/download/v2.2.0/app-v2.2.0-more.apk) |
 
 > APK 大小约 61MB，已内置全部语言模型，安装即可使用。
