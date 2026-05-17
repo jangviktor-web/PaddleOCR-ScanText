@@ -38,7 +38,8 @@
 
 ## 截图
 
-<img width="2057" height="1440" alt="20260516-175830" src="https://github.com/user-attachments/assets/68be9ac2-1681-489f-a69b-bf5ad520968c" />
+<img width="2592" height="1440" alt="Image" src="https://github.com/user-attachments/assets/290d150a-6705-476f-8175-9c46002a58ce" />
+
 
 ## 技术架构
 
