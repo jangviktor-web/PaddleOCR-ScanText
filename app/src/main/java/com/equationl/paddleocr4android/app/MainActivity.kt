@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnModeBox: TextView
     private lateinit var btnModeLine: TextView
     private lateinit var btnModeWord: TextView
+    private lateinit var btnModeLayout: TextView
     private lateinit var bottomPanel: LinearLayout
     private lateinit var panelHome: LinearLayout
     private lateinit var panelResult: LinearLayout
@@ -82,6 +83,7 @@ class MainActivity : AppCompatActivity() {
     private var currentPhotoUri: Uri? = null
     private var resultText: String = ""
     private var selectedText: String = ""
+    private var layoutRegions: List<LayoutRegion> = emptyList()
 
     private val segmentBs: SegmentBs by lazy { SegmentBs.newInstance() }
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -116,6 +118,7 @@ class MainActivity : AppCompatActivity() {
         btnModeBox = findViewById(R.id.btn_mode_box)
         btnModeLine = findViewById(R.id.btn_mode_line)
         btnModeWord = findViewById(R.id.btn_mode_word)
+        btnModeLayout = findViewById(R.id.btn_mode_layout)
         bottomPanel = findViewById(R.id.bottom_panel)
         panelHome = findViewById(R.id.panel_home)
         panelResult = findViewById(R.id.panel_result)
@@ -155,14 +158,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateTvResultHighlight() {
         if (selectedText.isEmpty()) {
-            tvResult.text = allResultLines.joinToString("\n")
+            tvResult.text = if (currentMode == 3) buildLayoutText() else allResultLines.joinToString("\n")
             return
         }
-        val ft = allResultLines.joinToString("\n")
-        val sp = android.text.SpannableString(ft)
+        val baseText = if (currentMode == 3) buildLayoutText() else allResultLines.joinToString("\n")
+        val sp = android.text.SpannableString(baseText)
         var sf = 0
-        while (sf < ft.length) {
-            val s = ft.indexOf(selectedText, sf)
+        while (sf < baseText.length) {
+            val s = baseText.indexOf(selectedText, sf)
             if (s < 0) break
             sp.setSpan(
                 android.text.style.BackgroundColorSpan(Color.parseColor("#662196F3")),
@@ -188,6 +191,7 @@ class MainActivity : AppCompatActivity() {
         btnModeBox.setOnClickListener { switchMode(0) }
         btnModeLine.setOnClickListener { switchMode(1) }
         btnModeWord.setOnClickListener { switchMode(2) }
+        btnModeLayout.setOnClickListener { switchMode(3) }
         findViewById<View>(R.id.btn_action_copy).setOnClickListener { copyResult() }
         findViewById<View>(R.id.btn_action_share).setOnClickListener { shareResult() }
         findViewById<View>(R.id.btn_action_words).setOnClickListener { switchMode(2) }
@@ -196,6 +200,7 @@ class MainActivity : AppCompatActivity() {
                 0 -> selectAllBoxes()
                 1 -> selectAllLines()
                 2 -> { if (wordAdapter.itemCount > 0) wordAdapter.selectAll() }
+                3 -> selectAllBoxes()
             }
         }
         findViewById<View>(R.id.btn_action_select_all).setOnClickListener(sla)
@@ -266,10 +271,12 @@ class MainActivity : AppCompatActivity() {
                 } catch (e: Exception) { Log.e(TAG, "分词失败", e); words }
                 val sw = mapSegmentToBoxes(sr, words, cp)
                 val lbg = computeLineBoxGroups(boxes)
+                val lr = LayoutAnalyzer.analyze(boxes, words, lines, lbg)
                 runOnUiThread {
                     loadingOverlay.visibility = View.GONE
                     allResultBoxes = boxes; allResultWords = words; allResultLines = lines
                     segmentedWords = sw; resultText = lines.joinToString("\n")
+                    layoutRegions = lr
                     showResultUI(result, lines, el, lbg)
                     saveToHistory(lines.joinToString("\n"))
                 }
@@ -352,7 +359,7 @@ class MainActivity : AppCompatActivity() {
         ivPreview.setImageBitmap(null)
         currentBitmap = null
         allResultBoxes = emptyList(); allResultWords = emptyList(); allResultLines = emptyList()
-        segmentedWords = emptyList(); resultText = ""
+        segmentedWords = emptyList(); resultText = ""; layoutRegions = emptyList()
         tvStatus.text = if (isModelLoaded) "拍照或从相册选图" else "请先加载模型"
         currentMode = 0; selectedText = ""
     }
@@ -360,7 +367,7 @@ class MainActivity : AppCompatActivity() {
     private fun switchMode(mode: Int) {
         currentMode = mode; selectedText = ""
         val act = Color.WHITE; val inact = Color.parseColor("#80FFFFFF")
-        val btns = listOf(btnModeBox, btnModeLine, btnModeWord)
+        val btns = listOf(btnModeBox, btnModeLine, btnModeWord, btnModeLayout)
         btns.forEachIndexed { i, b ->
             if (i == mode) { b.setBackgroundResource(R.drawable.bg_mode_active); b.setTextColor(act) }
             else { b.setBackgroundResource(0); b.setTextColor(inact) }
@@ -369,6 +376,7 @@ class MainActivity : AppCompatActivity() {
             0 -> { wordContainer.visibility = View.GONE; resultScroll.visibility = View.VISIBLE; tvResult.text = allResultLines.joinToString("\n"); ocrOverlay.setMode(OcrOverlayView.OcrMode.FRAME); ocrOverlay.clearSelection(); tvWordsBtnLabel.text = "分词" }
             1 -> { wordContainer.visibility = View.GONE; resultScroll.visibility = View.VISIBLE; tvResult.text = allResultLines.joinToString("\n"); ocrOverlay.setMode(OcrOverlayView.OcrMode.LINE); ocrOverlay.clearSelection(); tvWordsBtnLabel.text = "分词" }
             2 -> { wordContainer.visibility = View.VISIBLE; resultScroll.visibility = View.GONE; wordAdapter.setWordInfos(segmentedWords); ocrOverlay.setMode(OcrOverlayView.OcrMode.WORD); ocrOverlay.clearSelection(); tvWordsBtnLabel.text = "逐行" }
+            3 -> { wordContainer.visibility = View.GONE; resultScroll.visibility = View.VISIBLE; tvResult.text = buildLayoutText(); ocrOverlay.setMode(OcrOverlayView.OcrMode.FRAME); ocrOverlay.clearSelection(); tvWordsBtnLabel.text = "分词" }
         }
     }
 
@@ -384,9 +392,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun buildLayoutText(): String {
+        if (layoutRegions.isEmpty()) return allResultLines.joinToString("\n")
+        val sb = StringBuilder()
+        for (region in layoutRegions) {
+            sb.appendLine("【${region.type.label}】")
+            region.lines.forEach { sb.appendLine(it) }
+            sb.appendLine()
+        }
+        return sb.toString().trimEnd()
+    }
+
     private fun selectAllBoxes() {
         val a = (allResultWords.indices).toSet()
-        ocrOverlay.setSelectedIndices(a); selectedText = allResultWords.joinToString("")
+        ocrOverlay.setSelectedIndices(a)
+        selectedText = if (currentMode == 3) allResultLines.joinToString("\n") else allResultWords.joinToString("")
         updateTvResultHighlight()
     }
 

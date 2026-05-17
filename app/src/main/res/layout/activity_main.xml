@@ -173,6 +173,16 @@
                 android:textColor="#80FFFFFF"
                 android:paddingHorizontal="24dp"
                 android:paddingVertical="8dp" />
+
+            <TextView
+                android:id="@+id/btn_mode_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="版面"
+                android:textSize="13sp"
+                android:textColor="#80FFFFFF"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="8dp" />
         </LinearLayout>
     </FrameLayout>
 
