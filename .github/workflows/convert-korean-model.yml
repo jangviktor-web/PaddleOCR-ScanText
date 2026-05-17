@@ -14,9 +14,25 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install dependencies (pinned versions)
         run: |
-          pip install paddlepaddle paddlelite x2paddle onnx onnxsim onnx-graphsurgeon six requests numpy
+          pip install paddlepaddle==2.6.2
+          pip install paddlelite==2.12
+          pip install "onnx==1.14.0"
+          pip install x2paddle onnxsim onnx-graphsurgeon six requests numpy protobuf
+
+      - name: Verify all imports
+        run: |
+          python3 -c "
+          import paddle; print('paddle:', paddle.__version__)
+          import paddlelite; print('paddlelite OK')
+          import onnx; print('onnx:', onnx.__version__)
+          from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE; print('onnx.mapping OK')
+          import x2paddle; print('x2paddle OK')
+          import onnxsim; print('onnxsim OK')
+          import onnx_graphsurgeon; print('onnx_graphsurgeon OK')
+          print('All imports passed!')
+          "
 
       - name: Download Korean ONNX model from RapidOCR
         run: |
@@ -60,12 +76,12 @@ jobs:
           print("HardSwish replaced")
           PYEOF
 
-      - name: Simplify ONNX
+      - name: Simplify ONNX (fix dynamic input shape)
         run: |
           python3 -m onnxsim korean_rec_no_hardswish.onnx korean_rec_simplified.onnx \
             --overwrite-input-shape "x:1,3,48,320"
 
-      - name: Convert to PaddleLite .nb
+      - name: Convert ONNX → Paddle → PaddleLite .nb
         run: |
           x2paddle --framework=onnx \
             --model=korean_rec_simplified.onnx \
@@ -76,8 +92,12 @@ jobs:
 
       - name: Check output
         run: |
+          echo "=== Find .nb files ==="
           find . -name "*.nb" -ls
+          echo "=== korean_rec_pd contents ==="
           ls -la korean_rec_pd/ 2>/dev/null || true
+          echo "=== inference_model contents ==="
+          ls -la korean_rec_pd/inference_model/ 2>/dev/null || true
 
       - name: Upload .nb model
         uses: actions/upload-artifact@v4
