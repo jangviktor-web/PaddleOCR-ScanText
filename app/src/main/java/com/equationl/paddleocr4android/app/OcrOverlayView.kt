@@ -124,6 +124,23 @@ class OcrOverlayView @JvmOverloads constructor(
 
     fun getSelectedIndices(): Set<Int> = selectedIndices
 
+    /**
+     * 将 box 索引集合按原文阅读顺序排序（行号从上到下 → 行内从左到右）
+     */
+    fun sortByReadingOrder(indices: Set<Int>): List<Int> {
+        if (lineIndices.isEmpty()) return indices.sorted()
+        val posMap = mutableMapOf<Int, Pair<Int, Int>>()
+        for ((lineIdx, line) in lineIndices.withIndex()) {
+            for ((posInLine, boxIdx) in line.withIndex()) {
+                posMap[boxIdx] = Pair(lineIdx, posInLine)
+            }
+        }
+        return indices.sortedWith(compareBy(
+            { posMap[it]?.first ?: Int.MAX_VALUE },
+            { posMap[it]?.second ?: Int.MAX_VALUE }
+        ))
+    }
+
     fun setMode(mode: OcrMode) {
         this.mode = mode
         this.selectedLineIndices.clear()
@@ -275,8 +292,9 @@ class OcrOverlayView @JvmOverloads constructor(
                             }
                             selectedIndices = hitIndices
                             isDragging = false
-                            // 拼接选中框的文字
-                            val text = hitIndices.sorted().joinToString("") { i ->
+                            // 按阅读顺序拼接选中框的文字
+                            val ordered = sortByReadingOrder(hitIndices)
+                            val text = ordered.joinToString("") { i ->
                                 if (i < allWords.size) allWords[i] else ""
                             }
                             onMultiBoxSelected?.invoke(hitIndices, text)

@@ -344,25 +344,19 @@
                         android:textIsSelectable="true" />
                 </ScrollView>
 
-                <!-- 分词流式布局（可滚动） -->
+                <!-- 分词流式布局（FlowLayout 自管理滚动） -->
                 <FrameLayout
                     android:id="@+id/word_container"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:visibility="gone">
 
-                    <ScrollView
+                    <com.equationl.paddleocr4android.app.FlowLayout
+                        android:id="@+id/flow_words"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:paddingHorizontal="16dp"
-                        android:paddingVertical="8dp"
-                        android:clipToPadding="false">
-
-                        <com.equationl.paddleocr4android.app.FlowLayout
-                            android:id="@+id/flow_words"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </ScrollView>
+                        android:paddingVertical="8dp" />
 
                     <TextView
                         android:id="@+id/btn_select_all"

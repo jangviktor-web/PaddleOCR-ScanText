@@ -31,7 +31,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class WordInfo(val text: String, val boxIndices: List<Int>)
+data class WordInfo(
+    val text: String,
+    val boxIndices: List<Int>,
+    val lineIndex: Int = 0,
+    val positionInLine: Int = 0
+)
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -140,8 +145,10 @@ class MainActivity : AppCompatActivity() {
         }
         ocrOverlay.onBoxSelected = { _, _ ->
             val idx = ocrOverlay.getSelectedIndices()
-            selectedText = if (idx.isNotEmpty()) idx.sorted().joinToString("") { i ->
-                if (i < allResultWords.size) allResultWords[i] else ""
+            selectedText = if (idx.isNotEmpty()) {
+                ocrOverlay.sortByReadingOrder(idx).joinToString("") { i ->
+                    if (i < allResultWords.size) allResultWords[i] else ""
+                }
             } else ""
             updateTvResultHighlight()
         }
@@ -267,12 +274,9 @@ class MainActivity : AppCompatActivity() {
                         boxes.add(fp)
                     }
                 }
-                val ft = words.joinToString("")
-                val sr = try {
-                    segmentBs.segment(ft, SegmentResultHandlers.word()) as List<String>
-                } catch (e: Exception) { Log.e(TAG, "分词失败", e); words }
-                val sw = mapSegmentToBoxes(sr, words, cp)
                 val lbg = computeLineBoxGroups(boxes)
+                // 逐行分词，保持行序和行内词序
+                val sw = segmentByLine(words, cp, lbg)
                 runOnUiThread {
                     loadingOverlay.visibility = View.GONE
                     allResultBoxes = boxes; allResultWords = words; allResultLines = lines
@@ -308,20 +312,61 @@ class MainActivity : AppCompatActivity() {
         return g.map { gr -> gr.sortedBy { idx -> val b = boxes[idx]; minOf(b[0], b[2], b[4], b[6]) } }
     }
 
-    private fun mapSegmentToBoxes(sw: List<String>, ow: List<String>, cp: List<Int>): List<WordInfo> {
+    private fun mapSegmentToBoxes(sw: List<String>, ow: List<String>, cp: List<Int>, lineIdx: Int, startIdx: Int): List<WordInfo> {
         if (ow.isEmpty()) return emptyList()
         val r = mutableListOf<WordInfo>()
         var so = 0
+        var posInLine = 0
         for (s in sw) {
             if (s.isBlank()) { so += s.length; continue }
             val bi = mutableListOf<Int>()
             for (i in ow.indices) {
                 val os = cp[i]; val oe = os + ow[i].length
-                if (os < so + s.length && oe > so) bi.add(i)
+                if (os < so + s.length && oe > so) bi.add(i + startIdx)
             }
-            r.add(WordInfo(s, bi)); so += s.length
+            r.add(WordInfo(s, bi, lineIdx, posInLine)); so += s.length; posInLine++
         }
         return r
+    }
+
+    /**
+     * 逐行分词：每行单独调用分词器，保留行序和行内词序。
+     * 避免将所有行拼成一整串导致分词器打乱顺序。
+     */
+    private fun segmentByLine(
+        words: List<String>,
+        cp: List<Int>,
+        lineGroups: List<List<Int>>
+    ): List<WordInfo> {
+        if (words.isEmpty()) return emptyList()
+        if (lineGroups.isEmpty()) return listOf(WordInfo(words.joinToString(""), words.indices.toList()))
+
+        val result = mutableListOf<WordInfo>()
+        var wordOffset = 0
+
+        for ((lineIdx, group) in lineGroups.withIndex()) {
+            // 拼接该行所有词
+            val lineText = group.joinToString("") { words[it] }
+            // 该行所有词的累积字符位置
+            val lineCp = mutableListOf<Int>()
+            var pos = 0
+            for (wi in group) {
+                lineCp.add(pos)
+                pos += words[wi].length
+            }
+            // 逐行分词
+            val segments = try {
+                segmentBs.segment(lineText, SegmentResultHandlers.word()) as List<String>
+            } catch (e: Exception) {
+                Log.e(TAG, "分词失败 line $lineIdx", e)
+                group.map { words[it] }
+            }
+            // 映射回 box 索引（加上全局偏移）
+            val lineWords = mapSegmentToBoxes(segments, group.map { words[it] }, lineCp, lineIdx, wordOffset)
+            result.addAll(lineWords)
+            wordOffset += group.size
+        }
+        return result
     }
 
     private fun showImage(bmp: Bitmap) {
@@ -382,7 +427,9 @@ class MainActivity : AppCompatActivity() {
     private fun selectAllBoxes() {
         val a = (allResultWords.indices).toSet()
         ocrOverlay.setSelectedIndices(a)
-        selectedText = allResultWords.joinToString("")
+        selectedText = ocrOverlay.sortByReadingOrder(a).joinToString("") { i ->
+            if (i < allResultWords.size) allResultWords[i] else ""
+        }
         updateTvResultHighlight()
     }
 
