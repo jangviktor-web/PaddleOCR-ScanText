@@ -1,0 +1,88 @@
+name: Convert Korean PP-OCRv5 Model to .nb
+
+on:
+  workflow_dispatch:
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install paddlelite x2paddle onnx onnxsim onnx-graphsurgeon
+
+      - name: Download Korean ONNX model from RapidOCR
+        run: |
+          curl -L -o korean_PP-OCRv5_rec_mobile.onnx \
+            "https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/v3.8.0/onnx/PP-OCRv5/rec/korean_PP-OCRv5_rec_mobile.onnx"
+          ls -la korean_PP-OCRv5_rec_mobile.onnx
+
+      - name: Fix ONNX (replace HardSwish, fix dynamic shapes)
+        run: |
+          python3 << 'PYEOF'
+          import onnx
+          import onnx_graphsurgeon as gs
+          import numpy as np
+
+          model = onnx.load('./korean_PP-OCRv5_rec_mobile.onnx')
+          graph = gs.import_onnx(model)
+
+          hardswish_nodes = [n for n in graph.nodes if n.op == 'HardSwish']
+          print(f"Found {len(hardswish_nodes)} HardSwish nodes")
+
+          for node in hardswish_nodes:
+              x = node.inputs[0]
+              y = node.outputs[0]
+              add_const = gs.Constant(name=node.name + '_add3', values=np.array(3.0, dtype=np.float32))
+              add_out = gs.Variable(name=node.name + '_add_out', dtype=np.float32)
+              add_node = gs.Node(op='Add', name=node.name + '_add', inputs=[x, add_const], outputs=[add_out])
+              clip_min = gs.Constant(name=node.name + '_cmin', values=np.array(0.0, dtype=np.float32))
+              clip_max = gs.Constant(name=node.name + '_cmax', values=np.array(6.0, dtype=np.float32))
+              clip_out = gs.Variable(name=node.name + '_clip_out', dtype=np.float32)
+              clip_node = gs.Node(op='Clip', name=node.name + '_clip', inputs=[add_out, clip_min, clip_max], outputs=[clip_out])
+              mul_out = gs.Variable(name=node.name + '_mul_out', dtype=np.float32)
+              mul_node = gs.Node(op='Mul', name=node.name + '_mul', inputs=[x, clip_out], outputs=[mul_out])
+              div_const = gs.Constant(name=node.name + '_div6', values=np.array(6.0, dtype=np.float32))
+              div_node = gs.Node(op='Div', name=node.name + '_div', inputs=[mul_out, div_const], outputs=[y])
+              graph.nodes.extend([add_node, clip_node, mul_node, div_node])
+              node.outputs.clear()
+
+          graph.cleanup().toposort()
+          model = gs.export_onnx(graph)
+          onnx.save(model, './korean_rec_no_hardswish.onnx')
+          print("HardSwish replaced")
+          PYEOF
+
+      - name: Simplify ONNX
+        run: |
+          python3 -m onnxsim korean_rec_no_hardswish.onnx korean_rec_simplified.onnx \
+            --overwrite-input-shape "x:1,3,48,320"
+
+      - name: Convert to PaddleLite .nb
+        run: |
+          x2paddle --framework=onnx \
+            --model=korean_rec_simplified.onnx \
+            --save_dir=korean_rec_pd \
+            --to_lite=True \
+            --lite_valid_places=arm \
+            --lite_model_type=naive_buffer
+
+      - name: Check output
+        run: |
+          find . -name "*.nb" -ls
+          ls -la korean_rec_pd/ 2>/dev/null || true
+
+      - name: Upload .nb model
+        uses: actions/upload-artifact@v4
+        with:
+          name: korean-ppocrv5-rec-nb
+          path: |
+            **/*.nb
+          retention-days: 30
