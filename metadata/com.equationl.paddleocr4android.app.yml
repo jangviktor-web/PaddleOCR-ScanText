@@ -39,7 +39,7 @@ Builds:
     rm:
       - PaddleOCR4Android/OpenCV/sdk/native/3rdparty/libs/*/lib*.a
     prebuild:
-      - sed -i -e '/maven.aliyun.com/d' -e '/jitpack.io/d' settings.gradle
+      - sed -i -e '/maven.aliyun.com/d' settings.gradle
 
   - versionName: 2.6.3
     versionCode: 8
@@ -51,7 +51,7 @@ Builds:
     rm:
       - PaddleOCR4Android/OpenCV/sdk/native/3rdparty/libs/*/lib*.a
     prebuild:
-      - sed -i -e '/maven.aliyun.com/d' -e '/jitpack.io/d' settings.gradle
+      - sed -i -e '/maven.aliyun.com/d' settings.gradle
 
 AutoUpdateMode: Version %v
 UpdateCheckMode: Tags
