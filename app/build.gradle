@@ -53,8 +53,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
-    // JitPack 预编译 AAR（小写模块名）
-    implementation 'com.github.equationl.paddleocr4android:paddleocr4android:v1.2.9'
+    // 本地 PaddleOCR SDK 模块（从源码编译，不依赖 JitPack）
+    implementation project(':PaddleOCR4Android')
 
     // 中文分词（基于结巴词库，纯 Java，支持 Android）
     implementation 'com.github.houbb:segment:0.3.1'
