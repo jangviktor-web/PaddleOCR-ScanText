@@ -41,18 +41,6 @@ Builds:
     prebuild:
       - sed -i -e '/maven.aliyun.com/d' settings.gradle
 
-  - versionName: 2.6.3
-    versionCode: 8
-    commit: v2.6.3
-    subdir: app
-    submodules: true
-    gradle:
-      - yes
-    rm:
-      - PaddleOCR4Android/OpenCV/sdk/native/3rdparty/libs/*/lib*.a
-    prebuild:
-      - sed -i -e '/maven.aliyun.com/d' settings.gradle
-
 AutoUpdateMode: Version %v
 UpdateCheckMode: Tags
 UpdateCheckData: app/build.gradle
