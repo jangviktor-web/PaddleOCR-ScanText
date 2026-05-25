@@ -5,8 +5,9 @@
 一款将强大PaddleOCR引擎封装为易于使用的Android应用，**无需联网**，支持**中、英、日、韩及繁体中文**等多语言实时识别。
 
 <p align="center">
-  <img width="800" alt="PaddleOCR4Android 截图" src="https://github.com/user-attachments/assets/290d150a-6705-476f-8175-9c46002a58ce">
+
 </p>
+<img width="3000" height="2160" alt="微信图片_20260525100310_33_134" src="https://github.com/user-attachments/assets/29d823dd-fbd9-4e82-a041-647a943943db" />
 
 ## ✨ 核心亮点
 
