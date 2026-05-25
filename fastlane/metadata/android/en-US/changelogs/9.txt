@@ -1,0 +1,6 @@
+* Initial F-Droid release
+* PP-OCRv5 engine support
+* Multi-language OCR: Chinese, English, Japanese, Korean, Traditional Chinese
+* Three interaction modes: Box selection, line-by-line, word segmentation
+* Smart Chinese word segmentation with Jieba
+* Recognition history management

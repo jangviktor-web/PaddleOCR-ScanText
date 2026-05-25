@@ -1,0 +1,1 @@
+Offline OCR text recognition powered by PaddleOCR PP-OCRv5
