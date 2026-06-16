@@ -87,17 +87,123 @@
 
 欢迎开发者克隆、研究和贡献代码！
 
+### 环境要求
+
+| 工具 | 版本要求 | 说明 |
+| :--- | :--- | :--- |
+| **JDK** | 17+ (推荐 21) | Android Gradle Plugin 8.x 需要 JDK 17+ |
+| **Android SDK** | API 35 | `compileSdk 35`，通过 Android Studio 或 `sdkmanager` 安装 |
+| **Build Tools** | 35.0.1 | `buildToolsVersion "35.0.1"` |
+| **NDK** | **r21e** (21.4.7075529) | ⚠️ 必须使用 r21e，NDK 25+ 的链接器会拒绝 PaddleLite 预编译库 |
+| **CMake** | 3.22.1 | 编译 PaddleOCR 原生 C++ 代码 |
+| **Gradle** | 8.9 | 项目自带 `gradlew`，无需手动安装 |
+| **Kotlin** | 1.9.24 | 项目自带，无需手动安装 |
+
+### 安装步骤
+
+#### 1. 安装 JDK 17+
+
+**Windows：**
+```bash
+# 方式一：使用 Android Studio 自带的 JBR（推荐）
+# Android Studio 安装目录/jbr/bin/java -version
+
+# 方式二：手动安装 OpenJDK
+# 下载 https://adoptium.net/temurin/releases/?version=17
+# 安装后设置 JAVA_HOME 环境变量
+```
+
+**macOS：**
+```bash
+brew install openjdk@17
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+```
+
+**Linux：**
+```bash
+sudo apt install openjdk-17-jdk
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+```
+
+#### 2. 安装 Android SDK
+
+**方式一：使用 Android Studio（推荐）**
+1. 下载安装 [Android Studio](https://developer.android.com/studio)
+2. 打开 Android Studio → Settings → SDK Manager
+3. 安装以下组件：
+   - SDK Platforms → Android 15 (API 35)
+   - SDK Tools → Android SDK Build-Tools 35.0.1
+   - SDK Tools → NDK (Side by side) → 21.4.7075529
+   - SDK Tools → CMake → 3.22.1
+
+**方式二：使用命令行 sdkmanager**
+```bash
+# 下载 Android Command Line Tools
+# https://developer.android.com/studio#command-line-tools-only
+
+# 设置环境变量
+export ANDROID_HOME=$HOME/Android/Sdk
+
+# 安装必要组件
+sdkmanager "platforms;android-35" "build-tools;35.0.1" "ndk;21.4.7075529" "cmake;3.22.1"
+```
+
+#### 3. 配置 NDK 路径
+
+在项目根目录的 `local.properties` 中设置：
+```properties
+sdk.dir=/path/to/your/Android/Sdk
+ndk.dir=/path/to/your/Android/Sdk/ndk/21.4.7075529
+```
+
+⚠️ **NDK 版本注意事项：**
+- 本项目使用 PaddleLite 预编译的 `.so` 库，其中包含 NDK r21 编译的本地符号
+- NDK 25+ 的 `lld` 链接器会拒绝这些符号（报错 `found local symbol in global part of symbol table`）
+- **必须使用 NDK r21e**，否则无法编译
+
+### 构建命令
+
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/jangviktor-web/PaddleOCR4Android.git
 cd PaddleOCR4Android
 
-# 2. 在Android Studio中打开项目，或使用Gradle命令行构建
-./gradlew assembleRelease
+# 2. 构建 Release APK（命令行方式）
+./gradlew :app:assembleRelease
 
-# 3. 生成的APK位于：
+# 3. 生成的 APK 位于：
 # app/build/outputs/apk/release/app-release.apk
+
+# 4. 构建 Debug APK（用于调试）
+./gradlew :app:assembleDebug
 ```
+
+### 在 Android Studio 中构建
+
+1. 打开 Android Studio → File → Open → 选择项目目录
+2. 等待 Gradle 同步完成（首次需要下载依赖）
+3. 菜单 Build → Build Bundle(s) / APK(s) → Build APK(s)
+4. APK 输出路径：`app/build/outputs/apk/debug/app-release.apk`
+
+### 常见问题
+
+**Q: 构建报错 `Failed to find Build Tools revision 34.0.0`**
+A: 检查 `PaddleOCR4Android/build.gradle` 中的 `buildToolsVersion`，确保与已安装的版本匹配。
+
+**Q: 构建报错 `found local symbol in global part of symbol table`**
+A: NDK 版本不对，必须使用 NDK r21e。在 `PaddleOCR4Android/build.gradle` 中设置 `ndkVersion '21.4.7075529'`。
+
+**Q: Gradle 依赖下载超时**
+A: 配置代理，在 `~/.gradle/gradle.properties` 中添加：
+```properties
+systemProp.http.proxyHost=127.0.0.1
+systemProp.http.proxyPort=7897
+systemProp.https.proxyHost=127.0.0.1
+systemProp.https.proxyPort=7897
+```
+
+**Q: APK 体积多大？**
+A: Release APK 约 81MB（包含 CameraX 相机、OCR 模型、OpenCV 等）。
 
 ## 🏗️ 项目结构
 
