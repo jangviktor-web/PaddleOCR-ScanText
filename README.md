@@ -194,12 +194,12 @@ A: 检查 `PaddleOCR4Android/build.gradle` 中的 `buildToolsVersion`，确保�
 A: NDK 版本不对，必须使用 NDK r21e。在 `PaddleOCR4Android/build.gradle` 中设置 `ndkVersion '21.4.7075529'`。
 
 **Q: Gradle 依赖下载超时**
-A: 配置代理，在 `~/.gradle/gradle.properties` 中添加：
+A: 如果需要代理，在 `~/.gradle/gradle.properties` 中添加（将地址和端口替换为你自己的代理）：
 ```properties
-systemProp.http.proxyHost=127.0.0.1
-systemProp.http.proxyPort=7897
-systemProp.https.proxyHost=127.0.0.1
-systemProp.https.proxyPort=7897
+systemProp.http.proxyHost=你的代理地址
+systemProp.http.proxyPort=你的代理端口
+systemProp.https.proxyHost=你的代理地址
+systemProp.https.proxyPort=你的代理端口
 ```
 
 **Q: APK 体积多大？**
