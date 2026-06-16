@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -75,6 +76,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var ocr: OCR
     private var currentBitmap: Bitmap? = null
+    private var currentRotation = 0f
     private var isModelLoaded = false
     private var currentMode = 0
     private var allResultBoxes: List<FloatArray> = emptyList()
@@ -89,14 +91,29 @@ class MainActivity : AppCompatActivity() {
     private val scope = CoroutineScope(Dispatchers.Main)
     private val db by lazy { HistoryDatabase.getInstance(this) }
 
-    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success && currentPhotoUri != null) loadBitmapFromUri(currentPhotoUri!!)?.let { showImage(it) }
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val path = result.data?.getStringExtra(CameraActivity.EXTRA_PHOTO_PATH)
+            val rotation = result.data?.getFloatExtra(CameraActivity.EXTRA_PHOTO_ROTATION, 0f) ?: 0f
+            if (path != null) {
+                val bmp = loadBitmapFromPath(path, rotation)
+                if (bmp != null) showImage(bmp)
+            }
+        }
     }
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { loadBitmapFromUri(it)?.let { showImage(it) } }
     }
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) launchCamera() else tvStatus.text = "需要相机权限"
+    }
+    private val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val uri = result.data?.data
+            if (uri != null) {
+                loadBitmapFromUri(uri)?.let { showImage(it) }
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -204,6 +221,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btn_action_share).setOnClickListener { shareResult() }
         findViewById<View>(R.id.btn_action_words).setOnClickListener {
             switchMode(if (currentMode == 2) 1 else 2)
+        }
+        findViewById<View>(R.id.btn_action_crop).setOnClickListener {
+            cropCurrentImage()
         }
         val sla = View.OnClickListener {
             when (currentMode) {
@@ -378,6 +398,9 @@ class MainActivity : AppCompatActivity() {
         panelHome.visibility = View.GONE; panelResult.visibility = View.VISIBLE
         modeSwitchBar.visibility = View.VISIBLE; btnBack.visibility = View.VISIBLE
         emptyState.visibility = View.GONE
+
+        // 直接显示 OCR 返回的结果图，不旋转
+        // OCR 框选坐标基于原图，旋转会导致框和文字错位
         ivPreview.setImageBitmap(result.imgWithBox); currentBitmap = result.imgWithBox
         setupOverlayBoxes()
         ocrOverlay.setTexts(allResultWords, lines); ocrOverlay.setLineIndices(lbg)
@@ -439,6 +462,33 @@ class MainActivity : AppCompatActivity() {
         updateTvResultHighlight()
     }
 
+    private fun cropCurrentImage() {
+        val bmp = currentBitmap ?: run {
+            Toast.makeText(this, "请先选择或拍摄图片", Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            // 保存当前 bitmap 到临时文件
+            val cropFile = File(cacheDir, "crop_temp_${System.currentTimeMillis()}.jpg")
+            FileOutputStream(cropFile).use { bmp.compress(Bitmap.CompressFormat.JPEG, 95, it) }
+            val cropUri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", cropFile)
+
+            // 启动系统裁剪
+            val cropIntent = Intent("com.android.camera.action.CROP").apply {
+                setDataAndType(cropUri, "image/*")
+                putExtra("crop", "true")
+                putExtra("scale", "true")
+                putExtra("scaleUpIfNeeded", "true")
+                putExtra("return-data", false)
+                putExtra(MediaStore.EXTRA_OUTPUT, cropUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+            cropLauncher.launch(cropIntent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "设备不支持裁剪功能", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun copyResult() {
         val t = when {
             selectedText.isNotEmpty() -> selectedText
@@ -462,16 +512,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchCamera() {
-        val f = File(cacheDir, "ocr_${System.currentTimeMillis()}.jpg")
-        currentPhotoUri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", f)
-        cameraLauncher.launch(currentPhotoUri!!)
+        cameraLauncher.launch(Intent(this, CameraActivity::class.java))
+    }
+
+    private fun loadBitmapFromPath(path: String, rotation: Float = 0f): Bitmap? {
+        return try {
+            // 不旋转！直接加载原始图给 OCR 引擎识别
+            // 旋转只在显示时应用，不影响 OCR 识别精度
+            currentRotation = rotation
+            BitmapFactory.decodeFile(path)
+        } catch (e: Exception) { tvStatus.text = "加载图片失败: ${e.message}"; null }
+    }
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqSize: Int): Int {
+        val (w, h) = options.outWidth to options.outHeight
+        var inSampleSize = 1
+        if (w > reqSize || h > reqSize) {
+            var halfW = w / 2
+            var halfH = h / 2
+            while (halfW / inSampleSize >= reqSize && halfH / inSampleSize >= reqSize) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
     }
 
     private fun loadBitmapFromUri(uri: Uri): Bitmap? = try {
         val ins = contentResolver.openInputStream(uri)
         val bmp = BitmapFactory.decodeStream(ins)
         ins?.close()
-        val mx = 2048
+        val mx = getSharedPreferences(SettingsActivity.PREF_NAME, MODE_PRIVATE)
+            .getInt(SettingsActivity.KEY_PHOTO_MAX_SIZE, SettingsActivity.DEFAULT_PHOTO_MAX_SIZE)
         if (bmp.width > mx || bmp.height > mx) {
             val s = mx.toFloat() / maxOf(bmp.width, bmp.height)
             Bitmap.createScaledBitmap(bmp, (bmp.width * s).toInt(), (bmp.height * s).toInt(), true)

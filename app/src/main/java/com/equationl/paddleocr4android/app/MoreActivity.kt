@@ -15,6 +15,9 @@ class MoreActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.btn_history).setOnClickListener {
             startActivity(Intent(this, HistoryActivity::class.java))
         }
+        findViewById<android.view.View>(R.id.btn_settings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
         findViewById<android.view.View>(R.id.btn_about).setOnClickListener {
             AboutDialog(this).show()
         }

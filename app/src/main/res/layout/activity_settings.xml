@@ -7,7 +7,7 @@
 
     <!-- 顶部工具栏 -->
     <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar_more"
+        android:id="@+id/toolbar_settings"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/md_theme_surface"
@@ -21,7 +21,7 @@
             android:paddingHorizontal="4dp">
 
             <ImageView
-                android:id="@+id/btn_back_more"
+                android:id="@+id/btn_back_settings"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:padding="8dp"
@@ -31,7 +31,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="更多"
+                android:text="设置"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@color/md_theme_onSurface"
@@ -39,16 +39,16 @@
         </LinearLayout>
     </com.google.android.material.appbar.MaterialToolbar>
 
-    <!-- 内容区 -->
+    <!-- 设置项 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- 识别历史 -->
+        <!-- 照片最大尺寸 -->
         <LinearLayout
-            android:id="@+id/btn_history"
+            android:id="@+id/btn_photo_size"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -73,14 +73,15 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="识别历史"
+                    android:text="相册图片最大尺寸"
                     android:textSize="16sp"
                     android:textColor="@color/md_theme_onSurface" />
 
                 <TextView
+                    android:id="@+id/tv_photo_size_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="查看过往识别记录"
+                    android:text="4096 px"
                     android:textSize="13sp"
                     android:textColor="@color/md_theme_outline"
                     android:layout_marginTop="2dp" />
@@ -94,9 +95,9 @@
                 android:tint="@color/md_theme_outline" />
         </LinearLayout>
 
-        <!-- 设置 -->
+        <!-- 拍照分辨率 -->
         <LinearLayout
-            android:id="@+id/btn_settings"
+            android:id="@+id/btn_camera_resolution"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -108,7 +109,7 @@
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@drawable/ic_settings"
+                android:src="@drawable/ic_camera"
                 android:tint="@color/md_theme_onSurface" />
 
             <LinearLayout
@@ -121,14 +122,15 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="设置"
+                    android:text="拍照分辨率"
                     android:textSize="16sp"
                     android:textColor="@color/md_theme_onSurface" />
 
                 <TextView
+                    android:id="@+id/tv_camera_res_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="照片大小等偏好设置"
+                    android:text="2560 x 1440"
                     android:textSize="13sp"
                     android:textColor="@color/md_theme_outline"
                     android:layout_marginTop="2dp" />
@@ -142,9 +144,9 @@
                 android:tint="@color/md_theme_outline" />
         </LinearLayout>
 
-        <!-- 关于 -->
+        <!-- 清除缓存 -->
         <LinearLayout
-            android:id="@+id/btn_about"
+            android:id="@+id/btn_clear_cache"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -155,7 +157,7 @@
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@drawable/ic_more_vert"
+                android:src="@drawable/ic_delete"
                 android:tint="@color/md_theme_onSurface" />
 
             <LinearLayout
@@ -168,14 +170,15 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="关于"
+                    android:text="清除缓存"
                     android:textSize="16sp"
                     android:textColor="@color/md_theme_onSurface" />
 
                 <TextView
+                    android:id="@+id/tv_cache_size"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="应用信息与开源致谢"
+                    android:text="计算中..."
                     android:textSize="13sp"
                     android:textColor="@color/md_theme_outline"
                     android:layout_marginTop="2dp" />

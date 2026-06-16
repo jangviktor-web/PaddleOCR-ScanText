@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 构图网格线 -->
+    <com.equationl.paddleocr4android.app.GridOverlayView
+        android:id="@+id/grid_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- 对焦框 + 曝光条 -->
+    <com.equationl.paddleocr4android.app.FocusView
+        android:id="@+id/focus_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 顶部工具栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp"
+        android:background="#80000000">
+
+        <ImageView
+            android:id="@+id/btn_close_camera"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- 网格线开关 -->
+        <ImageView
+            android:id="@+id/btn_grid"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_grid"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="#FFFFFF" />
+
+        <!-- 闪光灯切换 -->
+        <ImageView
+            android:id="@+id/btn_flash"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_flash_auto"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/tv_resolution"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="分辨率"
+            android:textSize="13sp"
+            android:textColor="#FFFFFF"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:background="@drawable/bg_mode_active" />
+    </LinearLayout>
+
+    <!-- 缩放信息 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginTop="60dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingHorizontal="40dp">
+
+        <TextView
+            android:id="@+id/tv_zoom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1.0x"
+            android:textSize="20sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:shadowColor="#80000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3" />
+
+        <ProgressBar
+            android:id="@+id/zoom_progress_bar"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="200dp"
+            android:layout_height="6dp"
+            android:layout_marginTop="8dp"
+            android:max="100"
+            android:progress="0"
+            android:progressTint="#FFFFFF"
+            android:progressBackgroundTint="#40FFFFFF" />
+    </LinearLayout>
+
+    <!-- 底部拍照按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingBottom="40dp"
+        android:paddingTop="20dp"
+        android:background="#80000000">
+
+        <ImageView
+            android:id="@+id/btn_capture"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/ic_camera"
+            android:background="@drawable/bg_capture_button"
+            android:padding="16dp"
+            android:tint="#FFFFFF" />
+    </LinearLayout>
+</FrameLayout>

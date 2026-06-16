@@ -27,6 +27,9 @@
 
         <activity android:name=".MoreActivity" />
         <activity android:name=".HistoryActivity" />
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".CameraActivity"
+            android:screenOrientation="portrait" />
 
         <!-- FileProvider: 拍照功能需要 -->
         <provider

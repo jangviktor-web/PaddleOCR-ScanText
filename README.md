@@ -13,8 +13,9 @@
 
 - **完全离线**：所有识别在本地完成，无需网络，保护隐私且不受环境限制。
 - **PP-OCRv5 引擎**：搭载最新一代OCR模型，单模型精准识别中、英、日、繁体中文。
-- **智能交互**：提供 **框选、逐行、分词** 三种模式，满足从段落摘录到精准选词的多样化需求。
-- **开箱即用**：APK内置全部语言模型（约61MB），安装即享识别服务。
+- **智能交互**：提供 **框选、逐行、分词、裁剪** 四种模式，满足从段落摘录到精准选词的多样化需求。
+- **内置相机**：集成CameraX相机，支持双指缩放变焦、多分辨率拍照、前后摄切换。
+- **开箱即用**：APK内置全部语言模型（约81MB），安装即享识别服务。
 - **无缝集成**：为Android开发者提供清晰的架构和源码，便于集成到自己的项目中。
 
 ## 📥 下载安装
@@ -23,7 +24,9 @@
 
 | 版本 | 下载链接 | 更新重点 |
 | :--- | :--- | :--- |
-| **v2.7.0 (最新)** | [PaddleOCR-v2.7.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.0/PaddleOCR-v2.7.0.apk) | 🚀 **分词模式升级**：支持拖拽连续选词与自滚动，选词更流畅 |
+| **v2.7.2.0 (最新)** | [PaddleOCR-v2.7.2.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.2.0/PaddleOCR-v2.7.2.0.apk) | 🎯 **对焦锁定 + 闪光灯 + 网格线 + 曝光优化** |
+| v2.7.1.6 | [PaddleOCR-v2.7.1.6.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.1.6/PaddleOCR-v2.7.1.6.apk) | 📷 CameraX内置相机 + 双指缩放 + 区域裁剪 |
+| v2.7.0 | [PaddleOCR-v2.7.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.0/PaddleOCR-v2.7.0.apk) | 🚀 **分词模式升级**：支持拖拽连续选词与自滚动，选词更流畅 |
 | v2.6.3 | [PaddleOCR-v2.6.3.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.6.3/PaddleOCR-v2.6.3.apk) | 📄 优化长文本分词顺序与框选复制顺序 |
 | v2.6.1 | [PaddleOCR-v2.6.1.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.6.1/PaddleOCR-v2.6.1.apk) | 🖼️ 引入框选拖拽选区与流式分词布局 |
 | v2.3.0 | [PaddleOCR-v2.3.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.3.0/PaddleOCR-v2.3.0-original.apk) | ⚙️ 核心引擎升级至PP-OCRv5 |
@@ -57,8 +60,14 @@
 
 ### 实用功能
 - **复制与分享**：一键将识别结果复制到剪贴板或分享至其他应用。
+- **区域裁剪**：识别结果界面底部新增「裁剪」按钮，可对图片进行自由区域裁剪，裁剪后自动重新识别。
 - **历史记录**：自动保存识别历史，可随时查看、删除或清空。
 - **即时反馈**：返回时自动清空当前内容，为下次识别做好准备。
+
+### 设置功能
+- **拍照分辨率**：可选640×480 ~ 最高分辨率，CameraX按4:3比例输出，不裁剪不变形。
+- **相册图片最大尺寸**：控制相册上传图片的缩放上限（1024/2048/3072/4096 px）。
+- **清除缓存**：一键清除拍照缓存和历史图片，释放存储空间。
 
 ## ⚙️ 技术架构
 
@@ -68,9 +77,11 @@
 | :--- | :--- | :--- |
 | **OCR 引擎** | PaddleOCR + Paddle Lite | 核心识别与移动端推理。 |
 | **Android 封装** | paddleocr4android | 提供便捷的Android API调用接口。 |
+| **相机** | CameraX 1.3.1 | 内置相机预览、拍照、变焦、分辨率控制。 |
 | **中文分词** | houbb/segment (结巴词库) | 实现智能中文分词功能。 |
-| **数据持久化** | Room | 存储识别历史记录。 |
+| **数据持久化** | Room + SharedPreferences | 存储识别历史记录和用户设置。 |
 | **用户界面** | Material Design 3 + AndroidX | 提供现代、美观的UI组件。 |
+| **构建工具** | NDK r21e + Gradle 8.9 | 原生C++编译与项目构建。 |
 
 ## 📂 从源码构建
 
@@ -95,7 +106,10 @@ cd PaddleOCR4Android
 │   └── src/main/
 │       ├── java/.../             # Kotlin源码
 │       │   ├── MainActivity.kt     # 主界面与核心逻辑
+│       │   ├── CameraActivity.kt   # CameraX内置相机（缩放、拍照）
+│       │   ├── SettingsActivity.kt # 设置页（照片大小、缓存清理）
 │       │   ├── MoreActivity.kt     # 历史与关于页面
+│       │   ├── HistoryActivity.kt  # 识别历史列表
 │       │   ├── OcrOverlayView.kt   # 图片触摸交互层
 │       │   └── FlowLayout.kt       # 分词流式布局
 │       ├── assets/models/          # 预置的OCR模型(.nb)
@@ -114,6 +128,186 @@ cd PaddleOCR4Android
 - [Material Components for Android](https://github.com/material-components/material-components-android)
 
 ## 📜 更新日志
+
+<details>
+<summary><strong>v2.7.2.0 (2026-06-16) - 对焦锁定 + 闪光灯 + 网格线 + 曝光优化</strong></summary>
+
+**新增功能：**
+- **点击对焦**：点击相机预览区任意位置，弹出圆形白色对焦框，自动对焦该区域。对焦框带呼吸动画，3秒后自动消失。
+- **长按锁定对焦和曝光**：长按500ms切换锁定状态，对焦框变为金色方形，对焦+曝光锁定不自动取消（5分钟）。再次长按解锁。
+- **曝光补偿调节条**：锁定对焦后，对焦框右侧显示垂直滑块（-3 ~ +3 EV），拖动可实时调节曝光补偿，解决逆光/过曝场景。
+- **闪光灯模式切换**：顶部新增⚡按钮，点击循环切换三种模式：自动（⚡AUTO）、强制开启（⚡ON）、关闭（⚡OFF），Toast提示当前状态。
+- **构图辅助网格线**：顶部新增📊按钮，切换三等分网格线（Rule of Thirds），白色半透明线条，帮助构图。
+- **文字场景自动曝光优化**：相机启动时自动检测曝光状态，若接近过曝（曝光值接近上限），自动降低曝光补偿，优化文字识别场景。
+- **自定义FocusView**：新建`FocusView`自定义视图，集成对焦框绘制、曝光滑块、手势处理（拖动/长按/缩放）。
+- **自定义GridOverlayView**：新建构图网格线自定义视图。
+
+**问题修复：**
+- 修复了双指缩放闪退问题：`autoCancelDuration must be at least 1`，锁定对焦时`setAutoCancelDuration`最小值为1秒。
+- 修复了AE扫描不支持的崩溃：`MeteringPoints is not supported on this camera`，改为直接读取曝光状态检测过曝。
+- 修复了`FocusView`中`scaleGestureDetector?.isInProgress!!`空指针异常。
+- 修复了双指缩放手势被`FocusView`拦截的问题：将缩放手势检测移入`FocusView`内部，通过`onZoomChanged`回调连接到相机缩放控制。
+
+**技术改进：**
+- `FocusView`同时处理对焦（单指）和缩放（双指）手势，互不干扰。
+- 新增图标资源：`ic_grid.xml`、`ic_flash_auto.xml`、`ic_flash_on.xml`、`ic_flash_off.xml`。
+- 备份核心文件：`CameraActivity.kt.bak`、`activity_camera.xml.bak`。
+
+</details>
+
+<details>
+<summary><strong>v2.7.1.6 (2026-06-16) - CameraX内置相机 + 双指缩放 + 区域裁剪</strong></summary>
+
+**新增功能：**
+- **CameraX内置相机**：替换系统相机Intent，集成CameraX相机预览，支持实时取景、前后摄切换、闪光灯控制。
+- **双指捏合变焦**：在相机预览界面双指缩放调节焦距，支持1x~最大倍率连续变焦，顶部实时显示当前倍率（如"2.0x"）+ 水平进度条。双击可在1x和2x之间快速切换。
+- **拍照分辨率设置**：设置页新增「拍照分辨率」选项，可选640×480 ~ 最高分辨率，CameraX按4:3比例输出，不裁剪不变形。
+- **区域裁剪功能**：识别结果界面底部操作栏新增独立「裁剪」按钮（独立于框选/逐行/分词），调用系统裁剪工具，支持自由拖拽裁剪框，裁剪后自动替换图片并重新识别。
+
+**问题修复：**
+- 修复了使用系统相机拍照后，图片方向不正确的问题（左横屏/右横屏拍摄时图片旋转错误）。
+- 修复了识别结果界面复制文字时，不同行的文本没有换行符的问题。框选多行文字后复制，现在会按原始行结构自动插入换行。
+
+**技术改进：**
+- 移除了不可靠的传感器旋转计算（`calculateRotationFromSensors`），避免叠加多余旋转导致图片方向混乱。
+- OCR处理的bitmap不再进行旋转，确保识别内容准确不受影响。
+- 新增CameraX依赖：`camera-core`、`camera-camera2`、`camera-lifecycle`、`camera-view`（1.3.1）。
+- 新增`CameraActivity`：完整的CameraX相机实现，含预览、拍照、分辨率选择、变焦控制。
+- 新增`ic_crop.xml`、`ic_camera.xml`等矢量图标。
+
+</details>
+
+<details>
+<summary><strong>v2.7.1.5 (2026-06-16) - 旋转回退修复</strong></summary>
+
+**问题修复：**
+- 回退了之前版本中不稳定的图片旋转逻辑，确保OCR识别内容不被旋转操作干扰。
+- 拍照后的图片保持原始方向显示，OCR识别准确率恢复正常。
+
+</details>
+
+<details>
+<summary><strong>v2.7.1.1 (2026-06-16) - 自动方向校正（传感器）</strong></summary>
+
+**新增功能：**
+- 集成设备姿态传感器（`TYPE_ROTATION_VECTOR`），通过加速度计和陀螺仪融合数据检测设备实际姿态。
+- 根据传感器数据计算拍照后的校正角度，支持竖屏、横屏、倒置等多种握持方式。
+
+**技术改进：**
+- CameraActivity实现`SensorEventListener`接口，`onResume`/`onPause`自动注册/注销传感器监听。
+- 新增`calculateRotationFromSensors()`方法，根据pitch/roll角度判断设备姿态。
+- 综合传感器姿态+相机传感器角度+显示旋转计算最终校正角度。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.9 (2026-06-16) - EXIF旋转修复</strong></summary>
+
+**问题修复：**
+- 使用`windowManager.defaultDisplay.rotation`替代`previewView.display.rotation`获取更可靠的显示旋转角度。
+- 拍照前更新`imageCapture.targetRotation`确保旋转信息写入EXIF。
+- `loadBitmapFromPath`读取EXIF旋转标签并应用到bitmap。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.8 (2026-06-16) - 拍照分辨率设置</strong></summary>
+
+**新增功能：**
+- 设置页新增「拍照分辨率」选项，可选：640×480、1280×720、1920×1080、2560×1440（默认）、3840×2160、最高分辨率。
+- CameraX `ImageCapture`使用`setTargetResolution`控制拍照输出分辨率。
+- 新增`ic_language.xml`矢量图标（地球图标，用于语言切换设置）。
+
+**问题修复：**
+- 修复了拍照后图片被裁剪变小的问题（CameraX `setTargetResolution`会裁剪图片宽高比）。
+- 改用`setTargetAspectRatio(RATIO_4_3)`保持原始比例不裁剪。
+- 设置页「照片最大尺寸」改为仅作用于相册上传的图片，默认值改为4096（不缩放原图）。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.7 (2026-06-16) - 框选复制换行修复</strong></summary>
+
+**问题修复：**
+- 修复了框选模式下复制文字时，不同行的文本被拼接在一起没有换行的问题。
+- 新增`OcrOverlayView.buildSelectedText()`方法，根据box所在行自动在不同行之间插入`\n`换行符。
+- 全选/逐行模式的复制功能不受影响。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.6 (2026-06-16) - CameraX集成与拍照功能</strong></summary>
+
+**重大更新：**
+- **集成CameraX**：添加CameraX相机依赖（camera-core、camera-camera2、camera-lifecycle、camera-view 1.3.1），替换系统相机Intent。
+- **新建CameraActivity**：完整的CameraX相机页面，支持实时预览、拍照、分辨率选择、前后摄切换。
+- **设置页新增两项设置**：
+  - 「照片最大尺寸」：控制相册上传图片的缩放上限（1024/2048/3072/4096 px）。
+  - 「清除缓存」：显示缓存大小，一键清除拍照缓存和历史图片。
+- **新建SettingsActivity**：独立设置页面，含SharedPreferences持久化存储。
+- **MoreActivity添加设置入口**：更多页面新增「设置」选项，跳转到SettingsActivity。
+
+**技术改进：**
+- 使用NDK r21e（LLD 9.0.9）构建，解决NDK 25+链接器拒绝PaddleLite预编译.so符号表的问题。
+- CameraActivity使用`windowManager.defaultDisplay.rotation`获取显示旋转角度。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.5 (2026-06-16) - 图片旋转修复</strong></summary>
+
+**问题修复：**
+- 修复了拍照后识别结果界面图片方向不正确的问题。
+- 使用`android.media.ExifInterface`读取JPEG文件的EXIF旋转标签（90°/180°/270°），自动修正图片方向。
+- 缩放后正确回收旧Bitmap，减少内存占用。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.4 (2026-06-16) - CameraX旋转角度修复</strong></summary>
+
+**问题修复：**
+- 使用`windowManager.defaultDisplay.rotation`获取更可靠的显示旋转角度，替代`previewView.display.rotation`。
+- 拍照前更新`imageCapture.targetRotation`确保旋转信息正确写入。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.3 (2026-06-16) - 图片方向修复</strong></summary>
+
+**问题修复：**
+- 使用`android.media.ExifInterface`读取拍照文件的EXIF旋转标签。
+- 根据EXIF方向信息（ORIENTATION_ROTATE_90/180/270）自动旋转图片到正确方向。
+- 缩放后回收旧Bitmap，避免内存泄漏。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.2 (2026-06-16) - 拍照功能修复</strong></summary>
+
+**问题修复：**
+- 修复了切换拍照分辨率后拍照失败的问题（`ImageCapture`未重新绑定到相机）。
+- 新增`rebindCamera()`方法，切换分辨率时先`unbindAll()`再重新绑定。
+
+</details>
+
+<details>
+<summary><strong>v2.7.0.1 (2026-06-16) - 设置页与缓存功能</strong></summary>
+
+**新增功能：**
+- **新建设置页**（SettingsActivity）：
+  - 「照片最大尺寸」：可选1024/2048/3072/4096 px，默认2048，控制拍照后图片缩放上限。
+  - 「清除缓存」：显示当前缓存大小（拍照缓存+历史图片），一键清除。
+- **MoreActivity添加设置入口**：更多页面新增「设置」选项。
+- **SharedPreferences持久化**：照片大小设置通过SharedPreferences存储，重启应用后保留。
+- **新建图标**：`ic_settings.xml`（齿轮）、`ic_delete.xml`（垃圾桶）矢量图标。
+- **AndroidManifest注册**：添加SettingsActivity声明。
+
+**技术改进：**
+- `loadBitmapFromUri`读取SharedPreferences中的照片大小设置，替代硬编码的2048。
+- 清除缓存时删除`cacheDir`（拍照缓存）和`filesDir/history_images/`（历史图片）。
+
+</details>
 
 <details>
 <summary><strong>v2.7.0 (2026-05-17) - 分词交互革命</strong></summary>

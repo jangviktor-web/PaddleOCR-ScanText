@@ -168,6 +168,29 @@ class OcrOverlayView @JvmOverloads constructor(
         invalidate()
     }
 
+    /**
+     * 按阅读顺序拼接选中框的文字，不同行之间自动插入换行符
+     */
+    private fun buildSelectedText(orderedIndices: List<Int>): String {
+        if (orderedIndices.isEmpty()) return ""
+        val sb = StringBuilder()
+        var lastLineIndex = -1
+        for (boxIdx in orderedIndices) {
+            // 找到这个 box 所在的行
+            var lineIdx = -1
+            for ((li, line) in lineIndices.withIndex()) {
+                if (boxIdx in line) { lineIdx = li; break }
+            }
+            // 如果换行了，插入换行符
+            if (lastLineIndex >= 0 && lineIdx != lastLineIndex && lineIdx >= 0) {
+                sb.append("\n")
+            }
+            if (lineIdx >= 0) lastLineIndex = lineIdx
+            if (boxIdx < allWords.size) sb.append(allWords[boxIdx])
+        }
+        return sb.toString()
+    }
+
     fun clear() {
         wordBoxes = emptyList()
         selectedIndices = emptySet()
@@ -292,11 +315,9 @@ class OcrOverlayView @JvmOverloads constructor(
                             }
                             selectedIndices = hitIndices
                             isDragging = false
-                            // 按阅读顺序拼接选中框的文字
+                            // 按阅读顺序拼接选中框的文字，不同行之间插入换行
                             val ordered = sortByReadingOrder(hitIndices)
-                            val text = ordered.joinToString("") { i ->
-                                if (i < allWords.size) allWords[i] else ""
-                            }
+                            val text = buildSelectedText(ordered)
                             onMultiBoxSelected?.invoke(hitIndices, text)
                             invalidate()
                             return true
