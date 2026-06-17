@@ -8,10 +8,7 @@
 
 </p>
 <img width="3000" height="2160" alt="微信图片_20260525100310_33_134" src="https://github.com/user-attachments/assets/29d823dd-fbd9-4e82-a041-647a943943db" />
-
-<p align="center">
-<img width="5000" height="2160" alt="v2.7.2.2 功能展示" src="screenshots/v2.7.2.2-features.jpg" />
-</p>
+<img width="5000" height="2160" alt="1000012049" src="https://github.com/user-attachments/assets/ba6926fc-2dcf-42ea-a9a6-70c90d28abfc" />
 <p align="center">
 <em>v2.7.2.2 功能展示：内置相机（网格线+闪光灯+缩放）| 设置页 | 分辨率选择 | OCR识别结果 | 区域裁剪</em>
 </p>
