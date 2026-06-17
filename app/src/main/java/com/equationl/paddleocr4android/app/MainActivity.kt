@@ -295,14 +295,19 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 val lbg = computeLineBoxGroups(boxes)
+
+                // 根据 box 行分组重建带换行的文本（比 simpleText 更准确）
+                val rebuiltLines = lbg.map { group -> group.joinToString("") { words[it] } }
+                val rebuiltText = rebuiltLines.joinToString("\n")
+
                 // 逐行分词，保持行序和行内词序
                 val sw = segmentByLine(words, cp, lbg)
                 runOnUiThread {
                     loadingOverlay.visibility = View.GONE
-                    allResultBoxes = boxes; allResultWords = words; allResultLines = lines
-                    segmentedWords = sw; resultText = lines.joinToString("\n")
-                    showResultUI(result, lines, el, lbg)
-                    saveToHistory(lines.joinToString("\n"))
+                    allResultBoxes = boxes; allResultWords = words; allResultLines = rebuiltLines
+                    segmentedWords = sw; resultText = rebuiltText
+                    showResultUI(result, rebuiltLines, el, lbg)
+                    saveToHistory(rebuiltText)
                 }
             }
             override fun onFail(e: Throwable) = runOnUiThread {

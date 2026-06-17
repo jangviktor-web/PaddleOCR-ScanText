@@ -255,6 +255,9 @@ class CameraActivity : AppCompatActivity() {
             .setSingleChoiceItems(resolutionLabels, currentResolutionIndex) { dialog, which ->
                 currentResolutionIndex = which
                 tvResolution.text = resolutionLabels[which]
+                // 同步到设置
+                getSharedPreferences(SettingsActivity.PREF_NAME, MODE_PRIVATE)
+                    .edit().putInt(SettingsActivity.KEY_CAMERA_RESOLUTION, which).apply()
                 rebindCamera()
                 dialog.dismiss()
             }

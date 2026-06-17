@@ -13,8 +13,8 @@ android {
         applicationId "com.equationl.paddleocr4android.app"
         minSdk 24
         targetSdk 34
-        versionCode 30
-        versionName "2.7.2.0"
+        versionCode 32
+        versionName "2.7.2.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

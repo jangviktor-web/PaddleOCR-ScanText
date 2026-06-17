@@ -24,7 +24,8 @@
 
 | 版本 | 下载链接 | 更新重点 |
 | :--- | :--- | :--- |
-| **v2.7.2.0 (最新)** | [PaddleOCR-v2.7.2.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.2.0/PaddleOCR-v2.7.2.0.apk) | 🎯 **对焦锁定 + 闪光灯 + 网格线 + 曝光优化** |
+| **v2.7.2.2 (最新)** | [PaddleOCR-v2.7.2.2.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.2.2/PaddleOCR-v2.7.2.2.apk) | 🔧 **分辨率同步 + 复制换行修复** |
+| v2.7.2.0 | [PaddleOCR-v2.7.2.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.2.0/PaddleOCR-v2.7.2.0.apk) | 🎯 对焦锁定 + 闪光灯 + 网格线 + 曝光优化 |
 | v2.7.1.6 | [PaddleOCR-v2.7.1.6.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.1.6/PaddleOCR-v2.7.1.6.apk) | 📷 CameraX内置相机 + 双指缩放 + 区域裁剪 |
 | v2.7.0 | [PaddleOCR-v2.7.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.0/PaddleOCR-v2.7.0.apk) | 🚀 **分词模式升级**：支持拖拽连续选词与自滚动，选词更流畅 |
 | v2.6.3 | [PaddleOCR-v2.6.3.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.6.3/PaddleOCR-v2.6.3.apk) | 📄 优化长文本分词顺序与框选复制顺序 |
@@ -234,6 +235,25 @@ A: Release APK 约 81MB（包含 CameraX 相机、OCR 模型、OpenCV 等）。
 - [Material Components for Android](https://github.com/material-components/material-components-android)
 
 ## 📜 更新日志
+
+<details>
+<summary><strong>v2.7.2.2 (2026-06-16) - 分辨率同步 + 复制换行修复</strong></summary>
+
+**问题修复：**
+- **相机分辨率不同步到设置页**：在相机界面右上角切换分辨率后，现在会同步保存到 SharedPreferences，下次打开相机或在设置页查看时显示正确的分辨率。之前只更新了本地变量，没有持久化存储。
+- **复制文本无换行符**：OCR 识别后复制的内容没有按图片行结构分行。原因是之前依赖 `result.simpleText.split("\n")` 重建行，但 OCR 引擎的 simpleText 输出可能没有正确的换行符。现在改用 `computeLineBoxGroups(boxes)`（基于 box Y 坐标分组）重建行文本，复制、分享、历史记录都保持正确的行结构。
+
+</details>
+
+<details>
+<summary><strong>v2.7.2.1 (2026-06-16) - 复制文本换行修复</strong></summary>
+
+**问题修复：**
+- 修复了 OCR 识别后复制文本没有按行换行的问题。
+- 改用 box 垂直位置分组（`computeLineBoxGroups`）重建行文本，替代 OCR 引擎的 `simpleText` 输出。
+- 修复内容：复制、分享、历史记录现在都保持正确的行结构。
+
+</details>
 
 <details>
 <summary><strong>v2.7.2.0 (2026-06-16) - 对焦锁定 + 闪光灯 + 网格线 + 曝光优化</strong></summary>
