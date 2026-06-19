@@ -28,13 +28,13 @@
 
 | 版本 | 下载链接 | 更新重点 |
 | :--- | :--- | :--- |
-| **v2.7.2.2 (最新)** | [PaddleOCR-v2.7.2.2.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.2.2/PaddleOCR-v2.7.2.2.apk) | 🔧 **分辨率同步 + 复制换行修复** |
-| v2.7.2.0 | [PaddleOCR-v2.7.2.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.2.0/PaddleOCR-v2.7.2.0.apk) | 🎯 对焦锁定 + 闪光灯 + 网格线 + 曝光优化 |
-| v2.7.1.6 | [PaddleOCR-v2.7.1.6.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.1.6/PaddleOCR-v2.7.1.6.apk) | 📷 CameraX内置相机 + 双指缩放 + 区域裁剪 |
-| v2.7.0 | [PaddleOCR-v2.7.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.7.0/PaddleOCR-v2.7.0.apk) | 🚀 **分词模式升级**：支持拖拽连续选词与自滚动，选词更流畅 |
-| v2.6.3 | [PaddleOCR-v2.6.3.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.6.3/PaddleOCR-v2.6.3.apk) | 📄 优化长文本分词顺序与框选复制顺序 |
-| v2.6.1 | [PaddleOCR-v2.6.1.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.6.1/PaddleOCR-v2.6.1.apk) | 🖼️ 引入框选拖拽选区与流式分词布局 |
-| v2.3.0 | [PaddleOCR-v2.3.0.apk](https://github.com/jangviktor-web/PaddleOCR4Android/releases/download/v2.3.0/PaddleOCR-v2.3.0-original.apk) | ⚙️ 核心引擎升级至PP-OCRv5 |
+| **v2.7.2.2 (最新)** | [📥 下载](https://github.com/jangviktor-web/PaddleOCR4Android/releases/tag/v2.7.2.2) | 🔧 **分辨率同步 + 复制换行修复** |
+| v2.7.2.0 | [📥 下载](https://github.com/jangviktor-web/PaddleOCR4Android/releases/tag/v2.7.2.0) | 🎯 对焦锁定 + 闪光灯 + 网格线 + 曝光优化 |
+| v2.7.1.6 | [📥 下载](https://github.com/jangviktor-web/PaddleOCR4Android/releases/tag/v2.7.1.6) | 📷 CameraX内置相机 + 双指缩放 + 区域裁剪 |
+| v2.7.0 | [📥 下载](https://github.com/jangviktor-web/PaddleOCR4Android/releases/tag/v2.7.0) | 🚀 **分词模式升级**：支持拖拽连续选词与自滚动，选词更流畅 |
+| v2.6.3 | [📥 下载](https://github.com/jangviktor-web/PaddleOCR4Android/releases/tag/v2.6.3) | 📄 优化长文本分词顺序与框选复制顺序 |
+| v2.6.1 | [📥 下载](https://github.com/jangviktor-web/PaddleOCR4Android/releases/tag/v2.6.1) | 🖼️ 引入框选拖拽选区与流式分词布局 |
+| v2.3.0 | [📥 下载](https://github.com/jangviktor-web/PaddleOCR4Android/releases/tag/v2.3.0) | ⚙️ 核心引擎升级至PP-OCRv5 |
 
 > **最低系统要求**：Android 7.0 (API 24)
 
