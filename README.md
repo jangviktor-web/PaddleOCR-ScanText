@@ -10,15 +10,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/releases/latest"><img src="https://img.shields.io/github/v/release/jangviktor-web/PaddleOCR4Android?style=flat-square&label=Latest Release" /></a>
-  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/blob/master/LICENSE"><img src="https://img.shields.io/github/license/jangviktor-web/PaddleOCR4Android?style=flat-square" /></a>
-  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/stargazers"><img src="https://img.shields.io/github/stars/jangviktor-web/PaddleOCR4Android?style=flat-square" /></a>
-  <a href="https://img.shields.io/badge/Android-7.0%2B-green?style=flat-square&logo=android"><img src="https://img.shields.io/badge/Android-7.0%2B-green?style=flat-square&logo=android" /></a>
+  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/releases/latest"><img src="https://img.shields.io/github/v/release/jangviktor-web/PaddleOCR4Android?style=flat-square&label=Latest%20Release" alt="Latest Release" /></a>
+  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/blob/master/LICENSE"><img src="https://img.shields.io/github/license/jangviktor-web/PaddleOCR4Android?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/stargazers"><img src="https://img.shields.io/github/stars/jangviktor-web/PaddleOCR4Android?style=flat-square" alt="Stars" /></a>
+  <img src="https://img.shields.io/badge/Android-7.0+-green?style=flat-square&logo=android&logoColor=white" alt="Android 7.0+" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/releases/latest"><img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android" /></a>
-  <a href="https://github.com/jangviktor-web/PaddleOCR4Android"><img src="https://img.shields.io/badge/Source-Code-black?style=for-the-badge&logo=github" /></a>
+  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/releases/latest"><img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
+  <a href="https://github.com/jangviktor-web/PaddleOCR4Android"><img src="https://img.shields.io/badge/Source-Code-black?style=for-the-badge&logo=github&logoColor=white" alt="Source Code" /></a>
 </p>
 
 <p align="center">
