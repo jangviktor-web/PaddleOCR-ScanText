@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="200" src="https://raw.githubusercontent.com/jangviktor-web/PaddleOCR4Android/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" />
+  <img width="200" src="https://github.com/user-attachments/assets/ced84dc6-4c49-4502-bb48-6dc3328b5c77" />
 </p>
 
 <h1 align="center">PaddleOCR4Android</h1>
