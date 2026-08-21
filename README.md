@@ -19,18 +19,19 @@
 </p>
 
 <p align="center">
-<img width="3150" height="1361" alt="2_compressed" src="https://github.com/user-attachments/assets/85bed9e2-6e8b-479b-a7d8-f235db0420a7" />
+  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/releases/latest"><img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
+  <a href="https://github.com/jangviktor-web/PaddleOCR4Android"><img src="https://img.shields.io/badge/Source-Code-black?style=for-the-badge&logo=github&logoColor=white" alt="Source Code" /></a>
+
+</p>
+
+<p align="center">
+
+  <img width="3150" height="1361" alt="2_compressed" src="https://github.com/user-attachments/assets/85bed9e2-6e8b-479b-a7d8-f235db0420a7" />
+
+</p>
+
+<p align="center">
 <img width="1890" height="1361" alt="1_compressed" src="https://github.com/user-attachments/assets/73aeb629-a7f0-43ad-9265-184a21c1e268" />
-
-
-</p>
-
-<p align="center">
-  <img width="100%" alt="PaddleOCR4Android" src="https://github.com/user-attachments/assets/29d823dd-fbd9-4e82-a041-647a943943db" />
-</p>
-
-<p align="center">
-  <img width="100%" alt="v2.7.2.2 Features" src="https://github.com/user-attachments/assets/ba6926fc-2dcf-42ea-a9a6-70c90d28abfc" />
 </p>
 
 ---
