@@ -1,6 +1,8 @@
 <p align="center">
-  <img width="200" src="https://github.com/user-attachments/assets/ced84dc6-4c49-4502-bb48-6dc3328b5c77" />
-</p>
+  
+<img width="200" alt="图片边缘处理_compressed" src="https://github.com/user-attachments/assets/afe880ab-6d07-4a98-af84-d39667b5081c" />
+
+  </p>
 
 <h1 align="center">PaddleOCR4Android</h1>
 
@@ -17,8 +19,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jangviktor-web/PaddleOCR4Android/releases/latest"><img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" /></a>
-  <a href="https://github.com/jangviktor-web/PaddleOCR4Android"><img src="https://img.shields.io/badge/Source-Code-black?style=for-the-badge&logo=github&logoColor=white" alt="Source Code" /></a>
+<img width="3150" height="1361" alt="2_compressed" src="https://github.com/user-attachments/assets/85bed9e2-6e8b-479b-a7d8-f235db0420a7" />
+<img width="1890" height="1361" alt="1_compressed" src="https://github.com/user-attachments/assets/73aeb629-a7f0-43ad-9265-184a21c1e268" />
+
+
 </p>
 
 <p align="center">
